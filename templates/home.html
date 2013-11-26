@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <a href="{% url 'new_game' %}">New game</a>
+  {% for game in games %}
+    <h4>Game #{{ game.game_id }}</h4>
+    {% if game.your_turn %}
+      <p class="text-success">Your turn</p>
+    {% endif %}
+    {% if not game.game.play_phase %}
+      {{ trump }}
+      <form action="{% url 'draw' %}" method="post" class="form-horizontal">
+    {% else %}
+      <form method="post" class="form-horizontal">
+    {% endif %}
+    {% csrf_token %}
+  <div class="form-group">
+    <fieldset>
+      {% for card in game.get_hand %}
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="{{ card }}">{{ card }}
+          </label>
+        </div>
+      {% endfor %}
+      {% if not game.game.play_phase %}
+        <button class="btn btn-default" name="game_id" value="{{ game.game_id }}">Draw</button>
+        <button class="btn btn-default" name="trump" value="{{ game.game_id }}">Play Trump</button>
+      {% elif game.your_turn %}
+        <button class="btn btn-default" name="game_id" value="{{ game.game_id }}">Play</button>
+      {% endif %}
+    </fieldset>
+  </div>
+  </form>
+  {% endfor %}
+{% endblock %}

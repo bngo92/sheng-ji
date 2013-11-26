@@ -1,0 +1,33 @@
+{% load extras %}
+
+{% for field in form %}
+<div class="form-group{% if field.errors %} has-error{% endif %}">
+  <label for="{{ field.id_for_label }}" class="col-lg-4 control-label">{{ field.label }}</label>
+  <div class="col-lg-8">
+    {% if field.errors %}<span class="help-block">{{ field.errors }}</span>{% endif %}
+    {% if field.field.widget.input_type %}
+    {% if field.field.widget.input_type == 'file' %}
+    <input type="{{ field.field.widget.input_type }}" id="{{ field.id_for_label }}" {% if field.value %}value="{{ field.value }}" {% endif %}name="{{ field.html_name }}"{% if not field.value and field.field.required %} required{% endif %}>
+    {% else %}
+    <input type="{{ field.field.widget.input_type }}" class="form-control" id="{{ field.id_for_label }}" {% if field.value %}value="{{ field.value }}" {% endif %}name="{{ field.html_name }}"{% if not field.value and field.field.required %} required{% endif %}>
+    {% endif %}
+    {% else %}
+    {% if field.field.widget|classname:"RadioSelect" %}
+    {% for choice in field.field.choices %}
+    <label class="radio-inline">
+      <input type="radio" id="{{ field.id_for_label }}_{{ forloop.counter0 }}" value="{{ choice.0 }}" name="{{ field.html_name }}"{% if not field.value and forloop.first or field.value == choice.0 %} checked{% endif %}>{{ choice.1 }}
+    </label>
+    {% endfor %}
+    {% endif %}
+    {% if field.field.widget|classname:"Select" %}
+    <select class="form-control" name="{{ field.html_name }}">
+      {% for choice in field.field.choices %}
+      <option value="{{ choice.0 }}"{% if not field.value and forloop.first or field.value == choice.0 %} selected="selected"{% endif %}>{{ choice.1 }}
+      {% endfor %}
+    </select>
+    {% endif %}
+    {% endif %}
+    {{ field.help_text }}
+  </div>
+</div>
+{% endfor %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+  {% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="users">Invite</label>
+      <select multiple class="form-control" id="users" name="users">
+        {% for user in users %}
+          <option>{{ user }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="rank">Victory Score</label>
+      <select class="form-control" id="rank" name="rank">
+        {% for rank in ranks %}
+          <option value="{{ rank }}">{{ rank }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="btn btn-default">Play</button>
+  </form>
+{% endblock %}
