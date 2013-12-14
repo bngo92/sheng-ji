@@ -42,23 +42,14 @@ def logout(request):
 @login_required(login_url=home)
 def new_game(request):
     if request.method == "POST":
-        users = [User.objects.get(username=username) for username in request.POST.getlist('users')]
-        if len(users) == 4:
-            game = Game.objects.create(victory_score=request.POST.get('rank'))
-            for i, player in enumerate(users):
-                Player.objects.create(user=player, game=game, turn=i, team=(TEAM_CHOICES[i % 2])[0])
-            game.reserve_size = 8
-
-            deck_list = [Card(suit+rank) for suit, _ in SUITS for rank, _ in RANKS] + [Card('BJ')] + [Card('RJ')]
-            random.shuffle(deck_list)
-            game.deck = ','.join(str(card) for card in deck_list)
-            game.save()
-
+        players = [Player.objects.get(user__username=username) for username in request.POST.getlist('users')]
+        if not Game.setup(players):
+            error = 'Only 4-8 players are allowed'
+        else:
             return redirect(home)
-        error = 'Not enough users'
     else:
         error = None
-    return render(request, "new_game.html", {'users': User.objects.all(), 'ranks': [rank for rank, _ in RANKS], 'error': error})
+    return render(request, "new_game.html",  {'users': User.objects.all(), 'error': error})
 
 
 @login_required(login_url=home)
@@ -67,26 +58,18 @@ def draw(request):
         if 'trump' in request.POST:
             game_id = request.POST['trump']
             game = Game.objects.get(id=game_id)
-            player = request.user.player_set.get(game=game)
-            if game.active and game.deck and 'on' in request.POST:
-                cards = [k for k, v in request.POST if v == 'on' and Card(k).rank == game.trump_rank()]
+            player = GamePlayer(game=game, player__user=request.user)
+            if game.stage != Game.SCORE and game.deck and 'on' in request.POST:
+                cards = [k for k, v in request.POST if v == 'on']
+                if any(card.rank != game.dominant_rank for card in cards):
+                    error = 'Non-trump rank played'
+                else:
+                    pass  # TODO
+
         elif 'game_id' in request.POST:
             game_id = request.POST['game_id']
             game = Game.objects.get(id=game_id)
-            player = request.user.player_set.get(game=game)
-            if game.active and game.deck and player.your_turn():
-                deck_list = game.deck.split(',')
-                if len(deck_list) > Game.RESERVE_SIZE:
-                    player = game.player_set.get(game=game, turn=game.turn % game.player_set.count())
-                    if player.hand:
-                        player.hand += ',{}'.format(deck_list.pop())
-                    else:
-                        player.hand = deck_list.pop()
-                    player.save()
-                    game.deck = ','.join(deck_list)
-                    game.turn += 1
-                if len(deck_list) == Game.RESERVE_SIZE:
-                    game.reserve = game.deck
-                    game.deck = ''
-                game.save()
+            player = GamePlayer(game=game, player__user=request.user)
+            if game.stage != Game.SCORE and player.your_turn():
+                game.deal(player)
     return redirect(home)
