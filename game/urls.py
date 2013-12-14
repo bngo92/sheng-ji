@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     url(r'^logout/', 'main.views.logout', name='logout'),
     url(r'^new_game/', 'main.views.new_game', name='new_game'),
     url(r'^draw/', 'main.views.draw', name='draw'),
+    url(r'^status/', 'main.views.status', name='status'),
     # url(r'^game/', include('game.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

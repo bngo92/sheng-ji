@@ -1,3 +1,6 @@
+import json
+from django.http import HttpResponse
+
 from django.shortcuts import render as django_render, redirect
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
@@ -35,6 +38,12 @@ def register(request):
 def logout(request):
     auth.logout(request)
     return redirect(home)
+
+
+@login_required(login_url=home)
+def status(request):
+    if request.method == "POST":
+        return HttpResponse(json.dumps(Card.fromstr("1234")), content_type='application/json')
 
 
 @login_required(login_url=home)
