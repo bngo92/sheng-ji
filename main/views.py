@@ -43,8 +43,7 @@ def logout(request):
 
 @login_required(login_url=home)
 def status(request):
-    if request.method == "POST":
-        return HttpResponse(json.dumps(Card.fromstr("1234")), content_type='application/json')
+    return HttpResponse(json.dumps(Card.fromstr("1234")), content_type='application/json')
 
 
 @login_required(login_url=home)
