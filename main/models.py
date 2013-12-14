@@ -1,11 +1,13 @@
 from collections import Counter
 from functools import total_ordering
 import random
+import itertools
+
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db import models
-import itertools
+
 
 DECLARERS = 'A'
 OPPONENTS = 'B'
@@ -44,7 +46,7 @@ TEN = 'T'
 JACK = 'J'
 QUEEN = 'Q'
 KING = 'K'
-ACE = '10'
+ACE = 'A'
 JOKER = 'J'
 NORMAL_RANKS = (TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE)
 RANK_CHOICES = (
