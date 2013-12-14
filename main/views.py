@@ -1,4 +1,5 @@
 import json
+
 from django.http import HttpResponse
 
 from django.shortcuts import render as django_render, redirect
@@ -19,13 +20,13 @@ def render(request, template_name, additional=None):
 def home(request):
     if request.user.is_authenticated():
         return render(request, "home.html",
-                      {'games': request.user.player_set.filter(game__active=True)})
+                      {'games': Game.objects.filter(gameplayer__player__user=request.user)})
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
             auth.login(request, form.cleaned_data['user'])
             return render(request, "home.html",
-                          {'games': request.user.player_set.filter(game__active=True)})
+                          {'games': Game.objects.filter(gameplayer__player__user=request.user)})
     else:
         form = LoginForm()
     return render(request, "home_login.html", {'form': form})
