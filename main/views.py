@@ -43,7 +43,7 @@ def logout(request):
 
 @login_required(login_url=home)
 def status(request):
-    return HttpResponse(json.dumps(Hand.fromstr("S1S1CA")), content_type='application/json')
+    return HttpResponse(json.dumps(str(Hand.fromstr("S1S1CA"))), content_type='application/json')
 
 
 @login_required(login_url=home)
