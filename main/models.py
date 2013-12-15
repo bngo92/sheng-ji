@@ -255,7 +255,8 @@ class Game(models.Model):
         return 'Game #{}'.format(self.id)
 
     def get_absolute_url(self):
-        return '/game/{}'.format(self.id)
+        from django.core.urlresolvers import reverse
+        return reverse('main.views.game', args=[str(self.id)])
 
     def number_of_players(self):
         return self.gameplayer_set.count()
