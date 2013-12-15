@@ -3,25 +3,23 @@
 {% block content %}
 <script>
   $(document).ready(function() {
+    $("#refresh-btn").click(function() {
+      load(true);
+    });
     $.getJSON("/status/"+{{ id }}, function(data) {
       var play_btn = $("#play-btn");
       if (!data.ready) {
         play_btn.text("Ready");
         play_btn.click(function() {
-          $(this).text("Play");
+          play_btn.text("Play");
           $.ajax("/ready/"+{{ id }})
             .success(function() {
-              $(this).click(function() {
-                move($(this));
-              });
+              move(play_btn);
               load(true);
             });
         });
       } else {
         move(play_btn);
-        $("#refresh-btn").click(function() {
-          load(true);
-        });
         load(true);
       }
     });
@@ -49,6 +47,7 @@
       }
 
       if (data.stage == 4) {
+        var play_btn = $("#play-btn");
         if (data.turn) {
           play_btn.removeAttr("disabled", "disabled");
           play_btn.click(function() {
@@ -118,6 +117,7 @@
     $("#hand").append(e);
   }
   function move(e) {
+    e.off("click");
     e.click(function() {
       var a = [];
       $("#play").children("img").each(function() {

@@ -244,11 +244,11 @@ class Game(models.Model):
 
     SETTINGS = {
         # (number of players, number of decks, hand size))
-        4: (2, 25),  # 2 * 54 = 108; 4 * 25 + 8 = 108
-        5: (2, 20),  # 2 * 54 = 108; 5 * 20 + 8 = 108
-        6: (3, 25),  # 3 * 54 = 162; 6 * 26 + 6 = 162
-        7: (3, 25),  # 3 * 54 = 162; 7 * 22 + 8 = 162
-        8: (4, 25),  # 4 * 54 = 216; 8 * 26 + 8 = 216
+        4: (2, 25, 8),  # 2 * 54 = 108; 4 * 25 + 8 = 108
+        5: (2, 20, 8),  # 2 * 54 = 108; 5 * 20 + 8 = 108
+        6: (3, 25, 6),  # 3 * 54 = 162; 6 * 26 + 6 = 162
+        7: (3, 25, 8),  # 3 * 54 = 162; 7 * 22 + 8 = 162
+        8: (4, 25, 8),  # 4 * 54 = 216; 8 * 26 + 8 = 216
     }
 
     def __unicode__(self):
@@ -269,6 +269,9 @@ class Game(models.Model):
 
     def hand_size(self):
         return Game.SETTINGS[self.number_of_players()][1]
+
+    def reserve_size(self):
+        return Game.SETTINGS[self.number_of_players()][2]
 
     @classmethod
     def setup(cls, players):
@@ -347,6 +350,10 @@ class Game(models.Model):
             self.dominant_suit = next(iter(cards)).suit
             self.save()
 
+            play = Hand(cards)
+            player.play = str(play)
+            player.save()
+
     def reserve(self, player, cards):
         if self.stage != Game.RESERVE or player.turn != 0:
             return False
@@ -355,7 +362,7 @@ class Game(models.Model):
         if cards not in player_hand:
             return False
 
-        if len(player_hand.cards) != self.hand_size():
+        if len(cards) != self.reserve_size():
             return False
 
         player_hand.play_cards(cards)
