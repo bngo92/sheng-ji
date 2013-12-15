@@ -1,36 +1,65 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <a href="{% url 'new_game' %}">New game</a>
-  {% for game in games %}
-    <h4>Game #{{ game.game_id }}</h4>
-    {% if game.your_turn %}
-      <p class="text-success">Your turn</p>
-    {% endif %}
-    {% if not game.game.play_phase %}
-      {{ trump }}
-      <form action="{% url 'draw' %}" method="post" class="form-horizontal">
-    {% else %}
-      <form method="post" class="form-horizontal">
-    {% endif %}
-    {% csrf_token %}
-  <div class="form-group">
-    <fieldset>
-      {% for card in game.get_hand %}
-        <div class="checkbox">
-          <label>
-            <input type="checkbox" name="{{ card }}">{{ card }}
-          </label>
-        </div>
-      {% endfor %}
-      {% if not game.game.play_phase %}
-        <button class="btn btn-default" name="game_id" value="{{ game.game_id }}">Draw</button>
-        <button class="btn btn-default" name="trump" value="{{ game.game_id }}">Play Trump</button>
-      {% elif game.your_turn %}
-        <button class="btn btn-default" name="game_id" value="{{ game.game_id }}">Play</button>
-      {% endif %}
-    </fieldset>
-  </div>
-  </form>
-  {% endfor %}
+  <script>
+    $(document).ready(function() {
+      status = 0;
+      handle = 0;
+      load(false);
+      $("#play-btn").click(function() {
+        var a = [];
+        $("#play").children("img").each(function() {
+          a.push($(this).attr("class"));
+        });
+        $.post("/status/", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"});
+      });
+      $("#refresh-btn").click(function() {
+        load(true);
+      });
+    });
+    function load(force) {
+      clearTimeout(handle);
+      $.post("/status/", {data: "C1,C2,C4", csrfmiddlewaretoken: "{{ csrf_token }}"}, function (data) {
+        if (force || status != data) {
+          status = data;
+          $("#hand").empty();
+          $("#play").empty();
+          var hand = data.hand;
+          for (var i = 0; i < hand.length; i++) {
+          $("#hand")
+            .append(
+              $("<img src='{{ STATIC_URL }}"+(parseInt(i)+2)+"_of_club.png' class="+hand[i]+">")
+                .click(function() {
+                  play(this);
+                }
+              )
+            );
+          }
+        }
+      });
+      handle = setTimeout(function() {
+        load(false);
+      }, 10000);
+    }
+    function play(e) {
+      $(e).remove();
+      $(e).click(function() {
+        ret(e);
+      });
+      $("#play").append(e);
+    }
+    function ret(e) {
+      $(e).remove();
+      $(e).click(function() {
+        play(e);
+      });
+      $("#hand").append(e);
+    }
+  </script>
+  <h4>Hand</h4>
+  <div id="hand"></div>
+  <h4>Play</h4>
+  <div id="play"></div>
+  <button id="play-btn" class="btn">Play</button>
+  <button id="refresh-btn" class="btn">Refresh</button>
 {% endblock %}
