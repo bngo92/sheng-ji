@@ -3,25 +3,23 @@
 {% block content %}
   <script>
     $(document).ready(function() {
-      status = 0;
-      handle = 0;
       load(false);
       $("#play-btn").click(function() {
         var a = [];
         $("#play").children("img").each(function() {
           a.push($(this).attr("class"));
         });
-        $.post("/status/", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"});
+        $.post("/play/", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"});
       });
       $("#refresh-btn").click(function() {
         load(true);
       });
     });
     function load(force) {
-      clearTimeout(handle);
+      clearTimeout(window.handle);
       $.post("/status/", {data: "C1,C2,C4", csrfmiddlewaretoken: "{{ csrf_token }}"}, function (data) {
         if (force || status != data) {
-          status = data;
+          window.status = data;
           $("#hand").empty();
           $("#play").empty();
           var hand = data.hand;
@@ -37,7 +35,7 @@
           }
         }
       });
-      handle = setTimeout(function() {
+      window.handle = setTimeout(function() {
         load(false);
       }, 10000);
     }
@@ -60,6 +58,6 @@
   <div id="hand"></div>
   <h4>Play</h4>
   <div id="play"></div>
-  <button id="play-btn" class="btn">Play</button>
-  <button id="refresh-btn" class="btn">Refresh</button>
+  <button id="play-btn" class="btn btn-default">Play</button>
+  <button id="refresh-btn" class="btn btn-default">Refresh</button>
 {% endblock %}
