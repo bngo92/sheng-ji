@@ -47,7 +47,7 @@ JACK = 'J'
 QUEEN = 'Q'
 KING = 'K'
 ACE = 'A'
-JOKER = 'J'
+JOKER = 'S'
 NORMAL_RANKS = (TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE)
 RANK_CHOICES = (
     (TWO, '2'),
@@ -100,6 +100,12 @@ class Card(object):
     def __hash__(self):
         return self.suit, self.rank
 
+    def image(self):
+        return '{}_of_{}.png'.format(dict(RANK_CHOICES)[self.rank], dict(SUIT_CHOICES)[self.suit]).lower()
+
+    def repr(self):
+        return {'card': self.__str__(), 'image': self.image()}
+
 
 def create_deck():
     return ([Card(suit, rank) for suit in NORMAL_SUITS for rank in NORMAL_RANKS] +
@@ -115,7 +121,7 @@ class Hand(object):
 
     @classmethod
     def fromstr(cls, s):
-        return cls(cards=[Card.fromstr(ss) for ss in s.split(',')])
+        return cls(cards=[Card.fromstr(ss) for ss in s.split(',')] if s else [])
 
     def __len__(self):
         return len(self.cards)
@@ -221,21 +227,20 @@ class Game(models.Model):
     )
 
     # Game details
-    stage = models.CharField(max_length=1, choices=STAGE_CHOICES)
-    turn = models.IntegerField()
-    trick_turn = models.IntegerField()
+    stage = models.CharField(max_length=1, choices=STAGE_CHOICES, default=SETUP)
+    turn = models.IntegerField(default=0)
+    trick_turn = models.IntegerField(default=0)
 
     # Cards
     deck = models.CharField(max_length=1000)
     kitty = models.CharField(max_length=100)
-    hands = models.CharField(max_length=100)
-    lead_play = models.CharField(max_length=1)
-    lead_play_n = models.IntegerField()
+    #lead_play = models.CharField(max_length=1)
+    #lead_play_n = models.IntegerField()
 
     # Trump details
     dominant_rank = models.CharField(max_length=1, choices=RANK_CHOICES)
-    dominant_suit = models.CharField(max_length=1, choices=SUIT_CHOICES)
-    dominant_count = models.IntegerField()
+    dominant_suit = models.CharField(max_length=1, choices=SUIT_CHOICES, default=RED)
+    dominant_count = models.IntegerField(default=0)
 
     SETTINGS = {
         # (number of players, number of decks, hand size))
@@ -245,6 +250,12 @@ class Game(models.Model):
         7: (3, 25),  # 3 * 54 = 162; 7 * 22 + 8 = 162
         8: (4, 25),  # 4 * 54 = 216; 8 * 26 + 8 = 216
     }
+
+    def __unicode__(self):
+        return 'Game #{}'.format(self.id)
+
+    def get_absolute_url(self):
+        return '/game/{}'.format(self.id)
 
     def number_of_players(self):
         return self.gameplayer_set.count()
@@ -261,8 +272,7 @@ class Game(models.Model):
     @classmethod
     def setup(cls, players):
         game = cls()
-        game.stage = Game.DEAL
-        game.turn = 0
+        game.save()
 
         try:
             deck = [card for _ in range(game.number_of_decks(len(players))) for card in create_deck()]
@@ -285,35 +295,32 @@ class Game(models.Model):
             create_player(player, turn)
             create_player = create_rest_player
 
-        game.dominant_suit = RED
-        game.dominant_count = 0
         game.save()
+        return game
 
-        return True
+    def ready(self, player):
+        if self.stage != Game.SETUP:
+            return False
+
+        player.ready = True
+        player.save()
+
+        if all(player.ready for player in self.gameplayer_set.all()):
+            self.stage = Game.DEAL
+            self.save()
 
     def deal(self, player):
         if self.stage != Game.DEAL or not player.your_turn():
             return False
 
-        player_hand = player.hand
-        if len(player_hand) == self.hand_size() and player.turn == 0:
-            deck = Hand.fromstr(self.deck)
-            self.deck = ''
-
-            player_hand.add_cards(deck.cards)
-            player.hand = str(player_hand)
-
-            self.stage = Game.RESERVE
-            self.turn = 0
-            self.save()
-            player.save()
-            return True
+        player_hand = Hand.fromstr(player.hand)
+        if len(player_hand) >= self.hand_size():
+            return False
 
         deck = Hand.fromstr(self.deck)
         draw = deck.pop()
         self.deck = str(deck)
 
-        player_hand = Hand.fromstr(player.hand)
         player_hand.add_card(draw)
         player.hand = str(player_hand)
 
@@ -321,10 +328,10 @@ class Game(models.Model):
         self.save()
         player.save()
 
-        return True
+        return draw
 
     def set_dominant_suit(self, player, cards):
-        if self.stage != Game.DEAL or not player.your_turn():
+        if self.stage != Game.DEAL:
             return False
 
         if any(card.rank != self.dominant_rank for card in cards):
@@ -336,7 +343,7 @@ class Game(models.Model):
 
         if len(cards) > self.dominant_count:
             self.dominant_count = len(cards)
-            self.dominant_rank = next(cards).rank
+            self.dominant_suit = next(iter(cards)).suit
             self.save()
 
     def reserve(self, player, cards):
@@ -379,18 +386,17 @@ class Game(models.Model):
                 if (len([card for card in cards if card == tractor[0]]) ==
                         len([card for card in cards if card == tractor[1]])):
                     player_hand.play_cards(cards)
-            self.hands = str(Hand(cards))
 
         else:
-            first_hand = Hand.fromstr(self.hands.split(';', 1))
-            self.hands = '%s;%s'.format(self.hands, str(Hand(cards)))
+            #first_hand = Hand.fromstr(self.hands.split(';', 1))
+            pass
 
         player.hand = player_hand
         player.save()
         self.trick_turn += 1
 
         if self.trick_turn == self.number_of_players():
-            hands = [Hand.fromstr(s) for s in self.hands.split(';')]
+            #hands = [Hand.fromstr(s) for s in self.hands.split(';')]
             #self.turn = winner
             self.trick_turn = 0
 
@@ -399,10 +405,16 @@ class Game(models.Model):
 
 class Player(models.Model):
     user = models.ForeignKey(User)
-    rank = models.CharField(max_length=1, choices=RANK_CHOICES)
+    rank = models.CharField(max_length=1, choices=RANK_CHOICES, default=TWO)
 
     def __unicode__(self):
         return self.user.__unicode__()
+
+    @classmethod
+    def create_player(cls, username):
+        player = cls()
+        player.user = User.objects.create_user(username, password=username)
+        player.save()
 
 
 class GamePlayer(models.Model):
@@ -410,9 +422,11 @@ class GamePlayer(models.Model):
     player = models.ForeignKey(Player)
 
     team = models.CharField(max_length=1, choices=TEAM_CHOICES, default=OPPONENTS)
+    ready = models.BooleanField(default=False)
     turn = models.IntegerField()
     points = models.IntegerField(default=0)
     hand = models.CharField(max_length=200, default='')
+    play = models.CharField(max_length=200, default='')
 
     def __unicode__(self):
         return self.player.__unicode__()
@@ -422,6 +436,9 @@ class GamePlayer(models.Model):
 
     def your_turn(self):
         return (self.game.turn + self.game.trick_turn) % self.game.number_of_players() == self.turn
+
+    def get_play(self):
+        return Hand.fromstr(self.play)
 
 
 class LoginForm(forms.Form):

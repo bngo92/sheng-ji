@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script>
+  $(document).ready(function() {
+    $.getJSON("/status/"+{{ id }}, function(data) {
+      var play_btn = $("#play-btn");
+      if (!data.ready) {
+        play_btn.text("Ready");
+        play_btn.click(function() {
+          $(this).text("Play");
+          $.ajax("/ready/"+{{ id }})
+            .success(function() {
+              $(this).click(function() {
+                move($(this));
+              });
+              load(true);
+            });
+        });
+      } else {
+        move(play_btn);
+        $("#refresh-btn").click(function() {
+          load(true);
+        });
+        load(true);
+      }
+    });
+  });
+
+  function load(force) {
+    clearTimeout(window.handle);
+    $.getJSON("/status/"+{{ id }}, function(data) {
+      $("#dominant-suit").text("Dominant Suit: "+data.status.dominant_suit);
+      $("#dominant-rank").text("Dominant Rank: "+data.status.dominant_rank);
+      $("#turn").text("Turn: "+data.status.turn);
+
+      if (data.reserve) {
+        var reserve = $("#reserve");
+        if (reserve.length == 0) {
+          $("#buttons").append($("<button id='reserve' class='btn btn-success'>Reserve</buton>")
+            .click(function() {
+              $.post("/reserve/"+{{ id }}, {csrfmiddlewaretoken: "{{ csrf_token }}"}, function() {
+                  $("#reserve").remove();
+                  load(true);
+                });
+            })
+          );
+        }
+      }
+
+      if (data.stage == 4) {
+        if (data.turn) {
+          play_btn.removeAttr("disabled", "disabled");
+          play_btn.click(function() {
+            var a = [];
+            $("#play").children("img").each(function() {
+              a.push($(this).attr("class"));
+            });
+            $.post("/play/"+{{ id }}, {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"});
+          });
+        } else {
+          play_btn.attr("disabled", "disabled");
+          play_btn.off("click");
+        }
+      }
+
+      var hand = data.hand;
+      var cards;
+      if (force) {
+        $("#hand").empty();
+        $("#play").empty();
+        cards = hand.cards;
+      } else {
+        cards = hand.new_cards;
+      }
+
+      for (var i = 0; i < cards.length; i++) {
+        $("#hand")
+          .append(
+            $("<img src='{{ STATIC_URL }}"+cards[i].image+"' class="+cards[i].card+">")
+              .click(function() {
+                play(this);
+              }
+            )
+          );
+      }
+
+      var players = data.players;
+      var playersElement = $("#players");
+      playersElement.empty();
+      for (var i = 0; i < players.length; i++) {
+        var player = players[i];
+        playersElement.append($("<h5>"+player.name+"</h5>"));
+        cards = player.cards;
+        for (var j = 0; j < cards.length; j++) {
+          playersElement
+            .append(
+              $("<img src='{{ STATIC_URL }}"+cards[j].image+"' class="+cards[j].card+">"));
+        }
+      }
+    });
+    window.handle = setTimeout(function() {
+      load(false);
+    }, 2000);
+  }
+  function play(e) {
+    $(e).remove();
+    $(e).click(function() {
+      ret(e);
+    });
+    $("#play").append(e);
+  }
+  function ret(e) {
+    $(e).remove();
+    $(e).click(function() {
+      play(e);
+    });
+    $("#hand").append(e);
+  }
+  function move(e) {
+    e.click(function() {
+      var a = [];
+      $("#play").children("img").each(function() {
+        a.push($(this).attr("class"));
+      });
+      $.post("/play/"+{{ id }}, {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function() {
+        load(true);
+      });
+    });
+  }
+</script>
+<div id="status">
+  <span id="dominant-suit"></span>
+  <span id="dominant-rank"></span>
+  <span id="turn"></span>
+</div>
+<div class="col-md-8">
+  <h4>Hand</h4>
+  <div id="hand"></div>
+  <h4>Play</h4>
+  <div id="play"></div>
+  <div id="buttons">
+    <button id="play-btn" class="btn btn-primary">Play</button>
+    <button id="refresh-btn" class="btn btn-default">Refresh</button>
+  </div>
+</div>
+<div id="players" class="col-md-4">
+</div>
+{% endblock %}

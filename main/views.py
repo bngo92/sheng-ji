@@ -12,6 +12,7 @@ from models import *
 def render(request, template_name, additional=None):
     if additional is None:
         additional = {}
+
     if request.user.is_authenticated():
         additional.update({'username': request.user.get_username()})
     return django_render(request, template_name, additional)
@@ -21,6 +22,7 @@ def home(request):
     if request.user.is_authenticated():
         return render(request, "home.html",
                       {'games': Game.objects.filter(gameplayer__player__user=request.user)})
+
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -29,7 +31,13 @@ def home(request):
                           {'games': Game.objects.filter(gameplayer__player__user=request.user)})
     else:
         form = LoginForm()
-    return render(request, "home_login.html", {'form': form})
+
+    return render(request, "login.html", {'form': form})
+
+
+@login_required(login_url=home)
+def game(request, game_id):
+    return render(request, "game.html", {'id': game_id})
 
 
 def register(request):
@@ -42,41 +50,91 @@ def logout(request):
 
 
 @login_required(login_url=home)
-def status(request):
-    return HttpResponse(json.dumps(str(Hand.fromstr("S1S1CA"))), content_type='application/json')
+def status(request, game_id):
+    game = Game.objects.get(id=game_id)
+    players = game.gameplayer_set.all()
+    player = game.gameplayer_set.get(player__user=request.user)
+
+    new_cards = []
+    if game.stage == Game.DEAL:
+        new_card = game.deal(player)
+        if new_card:
+            new_cards.append(new_card.repr())
+
+    return HttpResponse(json.dumps({
+        'stage': game.stage,
+        'ready': player.ready,
+        'turn': player.your_turn(),
+        'reserve': game.stage == Game.DEAL and player.your_turn() and len(player.get_hand()) == game.hand_size(),
+        'status': {
+            'dominant_rank': game.get_dominant_rank_display(),
+            'dominant_suit': game.get_dominant_suit_display(),
+            'turn': next((player.__unicode__() for player in players if player.your_turn()), '')
+        },
+        'hand': {
+            'player': player.__unicode__(),
+            'str': ','.join(str(card) for card in sorted(player.get_hand().cards)),
+            'cards': [card.repr() for card in sorted(player.get_hand().cards)],
+            'new_cards': new_cards,
+        },
+        'players': [{'name': player.__unicode__(),
+                     'cards': [card.repr() for card in player.get_play().cards]} for player in players]
+    }), content_type='application/json')
+
+
+@login_required(login_url=home)
+def ready(request, game_id):
+    game = Game.objects.get(id=game_id)
+    player = game.gameplayer_set.get(player__user=request.user)
+
+    if game.stage == Game.SETUP:
+        game.ready(player)
+
+    return HttpResponse()
 
 
 @login_required(login_url=home)
 def new_game(request):
     if request.method == "POST":
         players = [Player.objects.get(user__username=username) for username in request.POST.getlist('users')]
-        if not Game.setup(players):
-            error = 'Only 4-8 players are allowed'
+        game = Game.setup(players)
+        if game:
+            return redirect(game)
         else:
-            return redirect(home)
+            error = 'Only 4-8 players are allowed'
     else:
         error = None
-    return render(request, "new_game.html",  {'users': User.objects.all(), 'error': error})
+    return render(request, "new_game.html", {'users': User.objects.all(), 'error': error})
 
 
 @login_required(login_url=home)
-def draw(request):
+def play(request, game_id):
+    game = Game.objects.get(id=game_id)
+    player = game.gameplayer_set.get(player__user=request.user)
     if request.method == "POST":
-        if 'trump' in request.POST:
-            game_id = request.POST['trump']
-            game = Game.objects.get(id=game_id)
-            player = GamePlayer(game=game, player__user=request.user)
-            if game.stage != Game.SCORE and game.deck and 'on' in request.POST:
-                cards = [k for k, v in request.POST if v == 'on']
-                if any(card.rank != game.dominant_rank for card in cards):
-                    error = 'Non-trump rank played'
-                else:
-                    pass  # TODO
+        cards = Hand.fromstr(request.POST['data']).cards
+        if game.stage == Game.DEAL:
+            game.set_dominant_suit(player, cards)
+        if game.stage == Game.RESERVE:
+            game.reserve(player, cards)
+        if game.stage == Game.PLAY:
+            game.play(player, cards)
+    return HttpResponse()
 
-        elif 'game_id' in request.POST:
-            game_id = request.POST['game_id']
-            game = Game.objects.get(id=game_id)
-            player = GamePlayer(game=game, player__user=request.user)
-            if game.stage != Game.SCORE and player.your_turn():
-                game.deal(player)
-    return redirect(home)
+
+@login_required(login_url=home)
+def reserve(request, game_id):
+    if request.method == "POST":
+        game = Game.objects.get(id=game_id)
+        player = game.gameplayer_set.get(player__user=request.user)
+        if game.stage == Game.DEAL and player.your_turn() and len(player.get_hand()):
+            reserve = Hand.fromstr(game.deck).cards
+            game.deck = ''
+            game.stage = Game.RESERVE
+            game.save()
+
+            player_hand = player.get_hand()
+            player_hand.add_cards(reserve.cards)
+            player.hand = str(player_hand)
+            player.save()
+    return HttpResponse()

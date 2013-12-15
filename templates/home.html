@@ -1,63 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <script>
-    $(document).ready(function() {
-      load(false);
-      $("#play-btn").click(function() {
-        var a = [];
-        $("#play").children("img").each(function() {
-          a.push($(this).attr("class"));
-        });
-        $.post("/play/", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"});
-      });
-      $("#refresh-btn").click(function() {
-        load(true);
-      });
-    });
-    function load(force) {
-      clearTimeout(window.handle);
-      $.post("/status/", {data: "C1,C2,C4", csrfmiddlewaretoken: "{{ csrf_token }}"}, function (data) {
-        if (force || status != data) {
-          window.status = data;
-          $("#hand").empty();
-          $("#play").empty();
-          var hand = data.hand;
-          for (var i = 0; i < hand.length; i++) {
-          $("#hand")
-            .append(
-              $("<img src='{{ STATIC_URL }}"+(parseInt(i)+2)+"_of_club.png' class="+hand[i]+">")
-                .click(function() {
-                  play(this);
-                }
-              )
-            );
-          }
-        }
-      });
-      window.handle = setTimeout(function() {
-        load(false);
-      }, 10000);
-    }
-    function play(e) {
-      $(e).remove();
-      $(e).click(function() {
-        ret(e);
-      });
-      $("#play").append(e);
-    }
-    function ret(e) {
-      $(e).remove();
-      $(e).click(function() {
-        play(e);
-      });
-      $("#hand").append(e);
-    }
-  </script>
-  <h4>Hand</h4>
-  <div id="hand"></div>
-  <h4>Play</h4>
-  <div id="play"></div>
-  <button id="play-btn" class="btn btn-default">Play</button>
-  <button id="refresh-btn" class="btn btn-default">Refresh</button>
+  <h4>Games</h4>
+  {% for game in games %}
+    <h4>Game #{{ game.id }}</h4>
+    <a href="{% url 'game' game.id %}">Game #{{ game.id }}</a>
+    {% if game.your_turn %}
+      <p class="text-success">Your turn</p>
+    {% endif %}
+  {% endfor %}
+  <a href="{% url 'new_game' %}"><button class="btn btn-primary">New game</button></a>
 {% endblock %}
