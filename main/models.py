@@ -23,6 +23,7 @@ SPADES = 'S'
 NORMAL_SUITS = (CLUBS, DIAMONDS, HEARTS, SPADES)
 BLACK = 'B'
 RED = 'R'
+DOMINANT = 'DOMINANT'
 JOKER_SUITS = (BLACK, RED)
 SUIT_CHOICES = (
     (CLUBS, 'Clubs'),
@@ -106,6 +107,15 @@ class Card(object):
     def repr(self):
         return {'card': self.__str__(), 'image': self.image()}
 
+    def is_trump(self, trump_suit, trump_rank):
+        return self.suit == trump_suit or self.rank in (trump_rank, JOKER)
+
+    def get_suit(self, trump_suit, trump_rank):
+        if self.is_trump(trump_suit, trump_rank):
+            return DOMINANT
+        else:
+            return self.suit
+
 
 def create_deck():
     return ([Card(suit, rank) for suit in NORMAL_SUITS for rank in NORMAL_RANKS] +
@@ -163,11 +173,15 @@ class Hand(object):
         else:
             self.cards.sort()
 
-    def has_suit(self, suit, trump_rank):
-        return any(card.suit == suit and card.rank != trump_rank for card in self.cards)
+    def single_suit(self, trump_suit, trump_rank):
+        suits = set(card.get_suit(trump_suit, trump_rank) for card in self.cards)
+        if len(suits) == 1:
+            return next(iter(suits))
+        else:
+            return None
 
-    def has_trump(self, trump_suit, trump_rank):
-        return any(card.suit == trump_suit or card.rank in (trump_rank, JOKER) for card in self.cards)
+    def has_suit(self, suit, trump_suit, trump_rank):
+        return any(card.get_suit(trump_suit, trump_rank) == suit for card in self.cards)
 
     def has_ntuple(self, suit, n, trump_rank):
         return any(count >= n
