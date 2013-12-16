@@ -6,13 +6,13 @@
     $("#refresh-btn").click(function() {
       load(true);
     });
-    $.getJSON("/status/"+{{ id }}, function(data) {
+    $.getJSON("{% url 'main.views.status' id %}", function(data) {
       var play_btn = $("#play-btn");
       if (!data.ready) {
         play_btn.text("Ready");
         play_btn.click(function() {
           play_btn.text("Play");
-          $.ajax("/ready/"+{{ id }})
+          $.ajax("{% url 'main.views.ready' id %}")
             .success(function() {
               move(play_btn);
               load(true);
@@ -27,7 +27,7 @@
 
   function load(force) {
     clearTimeout(window.handle);
-    $.getJSON("/status/"+{{ id }}, function(data) {
+    $.getJSON("{% url 'main.views.status' id %}", function(data) {
       $("#dominant-suit").text("Dominant Suit: "+data.status.dominant_suit);
       $("#dominant-rank").text("Dominant Rank: "+data.status.dominant_rank);
       $("#turn").text("Turn: "+data.status.turn);
@@ -37,7 +37,7 @@
         if (reserve.length == 0) {
           $("#buttons").append($("<button id='reserve' class='btn btn-success'>Reserve</buton>")
             .click(function() {
-              $.post("/reserve/"+{{ id }}, {csrfmiddlewaretoken: "{{ csrf_token }}"}, function() {
+              $.post("{% url 'reserve' id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function() {
                   $("#reserve").remove();
                   load(true);
                 });
@@ -55,7 +55,7 @@
             $("#play").children("img").each(function() {
               a.push($(this).attr("class"));
             });
-            $.post("/play/"+{{ id }}, {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"});
+            $.post("{% url 'play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"});
           });
         } else {
           play_btn.attr("disabled", "disabled");
@@ -123,7 +123,7 @@
       $("#play").children("img").each(function() {
         a.push($(this).attr("class"));
       });
-      $.post("/play/"+{{ id }}, {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function() {
+      $.post("{% url 'main.views.play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function() {
         load(true);
       });
     });
