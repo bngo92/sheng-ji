@@ -255,6 +255,7 @@ class Game(models.Model):
     trump_rank = models.CharField(max_length=1, choices=RANK_CHOICES)
     trump_suit = models.CharField(max_length=1, choices=SUIT_CHOICES, default=RED)
     trump_count = models.IntegerField(default=0)
+    trump_broken = models.BooleanField(default=False)
 
     SETTINGS = {
         # (number of players, number of decks, hand size))
