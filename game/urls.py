@@ -6,7 +6,6 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'main.views.home', name='home'),
-    url(r'^register/', 'main.views.register', name='register'),
     url(r'^logout/', 'main.views.logout', name='logout'),
     url(r'^new_game/', 'main.views.new_game', name='new_game'),
     url(r'^draw/', 'main.views.ready', name='draw'),

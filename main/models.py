@@ -6,7 +6,7 @@ import itertools
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, IntegrityError
 
 
 DECLARERS = 'A'
@@ -419,10 +419,14 @@ class Player(models.Model):
         return self.user.__unicode__()
 
     @classmethod
-    def create_player(cls, username):
+    def create_player(cls, username, password):
         player = cls()
-        player.user = User.objects.create_user(username, password=username)
-        player.save()
+        try:
+            player.user = User.objects.create_user(username, password=password)
+            player.save()
+            return player
+        except IntegrityError:
+            return None
 
 
 class GamePlayer(models.Model):
@@ -455,6 +459,8 @@ class LoginForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(LoginForm, self).clean()
+        if 'register' in self.data:
+            Player.create_player(username=cleaned_data.get('username'), password=cleaned_data.get('password'))
         user = authenticate(username=cleaned_data.get('username'), password=cleaned_data.get('password'))
         if user is None:
             self._errors['password'] = self.error_class(["Incorrect password."])

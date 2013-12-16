@@ -40,10 +40,6 @@ def game(request, game_id):
     return render(request, "game.html", {'id': game_id})
 
 
-def register(request):
-    return
-
-
 def logout(request):
     auth.logout(request)
     return redirect(home)
