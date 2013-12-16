@@ -23,7 +23,7 @@ SPADES = 'S'
 NORMAL_SUITS = (CLUBS, DIAMONDS, HEARTS, SPADES)
 BLACK = 'B'
 RED = 'R'
-DOMINANT = 'DOMINANT'
+TRUMP = 'TRUMP'
 JOKER_SUITS = (BLACK, RED)
 SUIT_CHOICES = (
     (CLUBS, 'Clubs'),
@@ -112,7 +112,7 @@ class Card(object):
 
     def get_suit(self, trump_suit, trump_rank):
         if self.is_trump(trump_suit, trump_rank):
-            return DOMINANT
+            return TRUMP
         else:
             return self.suit
 
@@ -127,7 +127,7 @@ class Hand(object):
         if cards is None:
             self.cards = []
         else:
-            self.cards = cards
+            self.cards = cards[:]
 
     @classmethod
     def fromstr(cls, s):
@@ -248,13 +248,13 @@ class Game(models.Model):
     # Cards
     deck = models.CharField(max_length=1000)
     kitty = models.CharField(max_length=100)
-    #lead_play = models.CharField(max_length=1)
+    #lead_play = models.CharField(max_length=100)
     #lead_play_n = models.IntegerField()
 
     # Trump details
-    dominant_rank = models.CharField(max_length=1, choices=RANK_CHOICES)
-    dominant_suit = models.CharField(max_length=1, choices=SUIT_CHOICES, default=RED)
-    dominant_count = models.IntegerField(default=0)
+    trump_rank = models.CharField(max_length=1, choices=RANK_CHOICES)
+    trump_suit = models.CharField(max_length=1, choices=SUIT_CHOICES, default=RED)
+    trump_count = models.IntegerField(default=0)
 
     SETTINGS = {
         # (number of players, number of decks, hand size))
@@ -302,7 +302,7 @@ class Game(models.Model):
         game.kitty = ''
 
         def create_first_player(player, turn):
-            game.dominant_rank = player.rank
+            game.trump_rank = player.rank
             GamePlayer.objects.create(game=game, player=player, team=DECLARERS, turn=turn)
 
         def create_rest_player(player, turn):
@@ -348,20 +348,20 @@ class Game(models.Model):
 
         return draw
 
-    def set_dominant_suit(self, player, cards):
+    def set_trump_suit(self, player, cards):
         if self.stage != Game.DEAL:
             return False
 
-        if any(card.rank != self.dominant_rank for card in cards):
+        if any(card.rank != self.trump_rank for card in cards):
             return False
 
         player_hand = Hand.fromstr(player.hand)
         if not cards in player_hand:
             return False
 
-        if len(cards) > self.dominant_count:
-            self.dominant_count = len(cards)
-            self.dominant_suit = next(iter(cards)).suit
+        if len(cards) > self.trump_count:
+            self.trump_count = len(cards)
+            self.trump_suit = next(iter(cards)).suit
             self.save()
 
             play = Hand(cards)

@@ -28,8 +28,8 @@
   function load(force) {
     clearTimeout(window.handle);
     $.getJSON("{% url 'main.views.status' id %}", function(data) {
-      $("#dominant-suit").text("Dominant Suit: "+data.status.dominant_suit);
-      $("#dominant-rank").text("Dominant Rank: "+data.status.dominant_rank);
+      $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
+      $("#trump-rank").text("Trump Rank: "+data.status.trump_rank);
       $("#turn").text("Turn: "+data.status.turn);
 
       if (data.reserve) {
@@ -87,7 +87,7 @@
       var players = data.players;
       var playersElement = $("#players");
       playersElement.empty();
-      for (var i = 0; i < players.length; i++) {
+      for (i = 0; i < players.length; i++) {
         var player = players[i];
         playersElement.append($("<h5>"+player.name+"</h5>"));
         cards = player.cards;
@@ -130,8 +130,8 @@
   }
 </script>
 <div id="status">
-  <span id="dominant-suit"></span>
-  <span id="dominant-rank"></span>
+  <span id="trump-suit"></span>
+  <span id="trump-rank"></span>
   <span id="turn"></span>
 </div>
 <div class="col-md-8">

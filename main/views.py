@@ -63,8 +63,8 @@ def status(request, game_id):
         'turn': player.your_turn(),
         'reserve': game.stage == Game.DEAL and player.your_turn() and len(player.get_hand()) == game.hand_size(),
         'status': {
-            'dominant_rank': game.get_dominant_rank_display(),
-            'dominant_suit': game.get_dominant_suit_display(),
+            'trump_rank': game.get_trump_rank_display(),
+            'trump_suit': game.get_trump_suit_display(),
             'turn': next((player.__unicode__() for player in players if player.your_turn()), '')
         },
         'hand': {
@@ -110,7 +110,7 @@ def play(request, game_id):
     if request.method == "POST":
         cards = Hand.fromstr(request.POST['data']).cards
         if game.stage == Game.DEAL:
-            game.set_dominant_suit(player, cards)
+            game.set_trump_suit(player, cards)
         if game.stage == Game.RESERVE:
             game.reserve(player, cards)
         if game.stage == Game.PLAY:
