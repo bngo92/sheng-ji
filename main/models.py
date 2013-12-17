@@ -51,8 +51,10 @@ ACE = 'A'
 JOKER = 'S'
 OFFSUIT_TRUMP = 'o'
 ONSUIT_TRUMP = 'O'
+SMALL_JOKER = 'x'
+BIG_JOKER = 'X'
 NORMAL_RANKS = (TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE)
-RANKS = (TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE, OFFSUIT_TRUMP, ONSUIT_TRUMP, JOKER)
+RANKS = NORMAL_RANKS + (OFFSUIT_TRUMP, ONSUIT_TRUMP, SMALL_JOKER, BIG_JOKER)
 RANK_CHOICES = (
     (TWO, '2'),
     (THREE, '3'),
@@ -120,7 +122,12 @@ class Card(object):
             return self.suit
 
     def get_rank(self, trump_suit, trump_rank):
-        if self.rank == trump_rank:
+        if self.rank == JOKER:
+            if self.suit == BLACK:
+                return SMALL_JOKER
+            else:
+                return BIG_JOKER
+        elif self.rank == trump_rank:
             if self.suit == trump_suit:
                 return ONSUIT_TRUMP
             else:
