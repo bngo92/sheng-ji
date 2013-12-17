@@ -32,12 +32,30 @@ class CardTest(TestCase):
 
 class PlayTest(TestCase):
     def test_init(self):
+        # tractor
         cards = Hand.fromstr("S2,S2,S3,S3").cards
         play = Play(cards, FOUR)
         self.assertTrue(play.suit == SPADES)
         self.assertTrue(len(play.combinations) == 1)
 
-        combination = next(iter(play.combinations))
+        combination = play.combinations[0]
         self.assertTrue(combination['n'] == 2)
         self.assertTrue(combination['consecutive'])
         self.assertTrue(combination['rank'] == THREE)
+
+        # combination
+        cards = Hand.fromstr("S2,S3").cards
+        play = Play(cards, FOUR)
+        self.assertTrue(play.suit == SPADES)
+        self.assertTrue(len(play.combinations) == 2)
+
+        combination = play.combinations[0]
+        self.assertTrue(combination['n'] == 1)
+        self.assertFalse(combination['consecutive'])
+        rank1 = combination['rank']
+
+        combination = play.combinations[1]
+        self.assertTrue(combination['n'] == 1)
+        self.assertFalse(combination['consecutive'])
+        rank2 = combination['rank']
+        self.assertTrue(sorted([rank1, rank2]) == sorted([TWO, THREE]))
