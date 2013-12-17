@@ -248,6 +248,36 @@ class Hand(object):
         return any(card.suit == next(cards).suit and card > min(cards) for card in self.cards)
 
 
+class Play(object):
+    def __init__(self, cards, trump_rank):
+        self.suit = next(iter(cards)).suit
+        self.combinations = []
+        ranks = Counter(card.rank for card in cards)
+
+        subsets = {}
+        for k, v in ranks.iteritems():
+            if v >= 2:
+                subsets.setdefault(v, []).append(k)
+
+        for subset in subsets.itervalues():
+            i = len(subset)
+            while i > 1:
+                permutations = itertools.permutations(subset, i)
+                for r in permutations:
+                    if is_consecutive(r, trump_rank):
+                        self.combinations.append({'n': len(r), 'consecutive': True, 'rank': RANKS[max(map(RANKS.index, r))]})
+                        for rank in r:
+                            del ranks[rank]
+                            subset.remove(rank)
+                        i = len(subset)
+                        break
+                else:
+                    i -= 1
+
+        for k, v in ranks.iteritems():
+            self.combinations.append({'n': v, 'consecutive': False, 'rank': k})
+
+
 class Game(models.Model):
     SETUP = '1'
     DEAL = '2'

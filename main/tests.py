@@ -28,3 +28,16 @@ class CardTest(TestCase):
 
         # Normal case with trump_rank in between
         self.assertTrue(is_consecutive(ranks2, THREE))
+
+
+class PlayTest(TestCase):
+    def test_init(self):
+        cards = Hand.fromstr("S2,S2,S3,S3").cards
+        play = Play(cards, FOUR)
+        self.assertTrue(play.suit == SPADES)
+        self.assertTrue(len(play.combinations) == 1)
+
+        combination = next(iter(play.combinations))
+        self.assertTrue(combination['n'] == 2)
+        self.assertTrue(combination['consecutive'])
+        self.assertTrue(combination['rank'] == THREE)
