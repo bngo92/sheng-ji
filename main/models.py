@@ -253,7 +253,7 @@ class Play(object):
     def __init__(self, cards, trump_rank):
         self.suit = next(iter(cards)).suit
         self.combinations = []
-        ranks = Counter(card.rank for card in cards)
+        ranks = Counter(card.get_rank() for card in cards)
 
         subsets = {}
         for k, v in ranks.iteritems():
