@@ -49,7 +49,10 @@ QUEEN = 'Q'
 KING = 'K'
 ACE = 'A'
 JOKER = 'S'
+OFFSUIT_TRUMP = 'o'
+ONSUIT_TRUMP = 'O'
 NORMAL_RANKS = (TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE)
+RANKS = (TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE, OFFSUIT_TRUMP, ONSUIT_TRUMP, JOKER)
 RANK_CHOICES = (
     (TWO, '2'),
     (THREE, '3'),
@@ -116,6 +119,15 @@ class Card(object):
         else:
             return self.suit
 
+    def get_rank(self, trump_suit, trump_rank):
+        if self.rank == trump_rank:
+            if self.suit == trump_suit:
+                return ONSUIT_TRUMP
+            else:
+                return OFFSUIT_TRUMP
+        else:
+            return self.rank
+
 
 def create_deck():
     return ([Card(suit, rank) for suit in NORMAL_SUITS for rank in NORMAL_RANKS] +
@@ -123,11 +135,11 @@ def create_deck():
 
 
 def is_consecutive(ranks, trump_rank):
-    if len(ranks) < 2 or trump_rank in ranks:
+    if len(ranks) < 2:
         return False
 
-    ranks = map(NORMAL_RANKS.index, ranks)
-    trump_rank = NORMAL_RANKS.index(trump_rank)
+    ranks = map(RANKS.index, ranks)
+    trump_rank = RANKS.index(trump_rank)
     min_rank = min(ranks)
     max_rank = max(ranks)
     return (sorted(ranks + [trump_rank]) == range(min_rank, max_rank + 1) if min_rank < trump_rank < max_rank else
