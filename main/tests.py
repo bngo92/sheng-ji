@@ -18,7 +18,7 @@ class CardTest(TestCase):
         ranks1 = Hand.fromstr("S2,S3").cards
         ranks2 = Hand.fromstr("S2,S4").cards
         ranks3 = Hand.fromstr("S2,S3,S4").cards
-        ranks4 = Hand.fromstr("SA,S2,H2,BS,RS").cards
+        ranks4 = Hand.fromstr("S14,S2,H2,B15,R15").cards
 
         # Normal case
         self.assertTrue(is_consecutive(ranks1, HEARTS, FOUR))

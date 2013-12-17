@@ -26,6 +26,7 @@ BLACK = 'B'
 RED = 'R'
 TRUMP = 'TRUMP'
 JOKER_SUITS = (BLACK, RED)
+SUITS = NORMAL_SUITS + JOKER_SUITS
 SUIT_CHOICES = (
     (CLUBS, 'Clubs'),
     (DIAMONDS, 'Diamonds'),
@@ -36,24 +37,11 @@ SUIT_CHOICES = (
     (RED, 'Red'),
 )
 
-TWO = '2'
-THREE = '3'
-FOUR = '4'
-FIVE = '5'
-SIX = '6'
-SEVEN = '7'
-EIGHT = '8'
-NINE = '9'
-TEN = 'T'
-JACK = 'J'
-QUEEN = 'Q'
-KING = 'K'
-ACE = 'A'
-JOKER = 'S'
-OFFSUIT_TRUMP = 'o'
-ONSUIT_TRUMP = 'O'
-SMALL_JOKER = 'x'
-BIG_JOKER = 'X'
+TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE, JOKER = range(2, 2 + 14)
+OFFSUIT_TRUMP = JOKER
+ONSUIT_TRUMP = JOKER + 1
+SMALL_JOKER = JOKER + 2
+BIG_JOKER = JOKER + 3
 NORMAL_RANKS = (TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE)
 RANKS = NORMAL_RANKS + (OFFSUIT_TRUMP, ONSUIT_TRUMP, SMALL_JOKER, BIG_JOKER)
 RANK_CHOICES = (
@@ -83,26 +71,16 @@ class Card(object):
 
     @classmethod
     def fromstr(cls, s):
-        return cls(suit=s[0], rank=s[1])
+        return cls(suit=s[0], rank=int(s[1:]))
 
     def __eq__(self, other):
         return (self.suit, self.rank) == (other.suit, other.rank)
 
     def __lt__(self, other):
-        if self.suit in NORMAL_SUITS:
-            if other.suit in JOKER_SUITS:
-                return True
-            else:
-                key = NORMAL_SUITS
-        else:
-            if other.suit in JOKER_SUITS:
-                key = JOKER_SUITS
-            else:
-                return False
-        return key.index(self.suit) < key.index(other.suit)
+        return (SUITS.index(self.suit), self.rank) < (SUITS.index(other.suit), other.rank)
 
     def __str__(self):
-        return self.suit + self.rank
+        return self.suit + str(self.rank)
 
     def __hash__(self):
         return hash((self.suit, self.rank))
@@ -268,7 +246,8 @@ class Play(object):
                     if is_consecutive(p, trump_suit, trump_rank):
                         self.combinations.append(
                             {'n': len(p), 'consecutive': True,
-                             'rank': RANKS[max(RANKS.index(card.get_rank(trump_suit, trump_rank)) for card in p)]})
+                             'rank': RANKS[max(RANKS.index(card.get_rank(trump_suit, trump_rank)) for card in p)],
+                             'cards': Hand(p)})
                         for rank in p:
                             del ranks[rank]
                             subset.remove(rank)
