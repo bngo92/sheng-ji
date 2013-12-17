@@ -89,7 +89,7 @@ class Card(object):
         return '{}_of_{}.png'.format(dict(RANK_CHOICES)[self.rank], dict(SUIT_CHOICES)[self.suit]).lower()
 
     def repr(self):
-        return {'card': self.__str__(), 'image': self.image()}
+        return {'card': str(self), 'image': self.image()}
 
     def is_trump(self, trump_suit, trump_rank):
         return self.suit == trump_suit or self.rank in (trump_rank, JOKER)
@@ -192,39 +192,6 @@ class Hand(object):
 
     def has_suit(self, suit, trump_suit, trump_rank):
         return any(card.get_suit(trump_suit, trump_rank) == suit for card in self.cards)
-
-    def has_ntuple(self, suit, n, trump_rank):
-        return any(count >= n
-                   for count in Counter(card
-                                        for card in self.cards
-                                        if card.suit == suit and card.rank != trump_rank).itervalues())
-
-    def has_trump_ntuple(self, trump_suit, n, trump_rank):
-        return any(count >= n
-                   for count in Counter(card
-                                        for card in self.cards
-                                        if card.suit == trump_suit or card.rank in (trump_rank, JOKER)).itervalues())
-
-    def has_consecutive_ntuple(self, suit, n, trump_rank):
-        ranks = sorted(set(NORMAL_RANKS.index(card.rank)
-                           for card, count in Counter(card
-                                                      for card in self.cards
-                                                      if card.suit == suit and card.rank != trump_rank).iteritems()
-                           if count >= n))
-        return any(abs(t1 - t0) == 1 or t0 + t1 == trump_rank * 2
-                   for t0, t1 in itertools.combinations(ranks, 2))
-
-    def has_trump_consecutive_ntuple(self, trump_suit, n, trump_rank):
-        ranks = sorted(set(NORMAL_RANKS.index(card.rank)
-                           for card, count in Counter(card
-                                                      for card in self.cards
-                                                      if card.suit == trump_suit and card.rank in (trump_rank, JOKER)).iteritems()
-                           if count >= n))
-        return any(abs(t1 - t0) == 1 or t0 + t1 == trump_rank * 2
-                   for t0, t1 in itertools.combinations(ranks, 2))
-
-    def has_higher(self, cards):
-        return any(card.suit == next(cards).suit and card > min(cards) for card in self.cards)
 
 
 class Play(object):
