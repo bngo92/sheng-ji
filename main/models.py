@@ -105,7 +105,7 @@ class Card(object):
         return self.suit + self.rank
 
     def __hash__(self):
-        return self.suit, self.rank
+        return hash((self.suit, self.rank))
 
     def image(self):
         return '{}_of_{}.png'.format(dict(RANK_CHOICES)[self.rank], dict(SUIT_CHOICES)[self.suit]).lower()
@@ -142,11 +142,11 @@ def create_deck():
             [Card(suit, JOKER) for suit in JOKER_SUITS])
 
 
-def is_consecutive(ranks, trump_rank):
-    if len(ranks) < 2:
+def is_consecutive(cards, trump_suit, trump_rank):
+    if len(cards) < 2:
         return False
 
-    ranks = map(RANKS.index, ranks)
+    ranks = [RANKS.index(card.get_rank(trump_suit, trump_rank)) for card in cards]
     trump_rank = RANKS.index(trump_rank)
     min_rank = min(ranks)
     max_rank = max(ranks)
@@ -250,10 +250,10 @@ class Hand(object):
 
 
 class Play(object):
-    def __init__(self, cards, trump_rank):
-        self.suit = next(iter(cards)).suit
+    def __init__(self, cards, trump_suit, trump_rank):
+        self.suit = next(iter(cards)).get_suit(trump_suit, trump_rank)
         self.combinations = []
-        ranks = Counter(card.get_rank() for card in cards)
+        ranks = Counter(card for card in cards)
 
         subsets = {}
         for k, v in ranks.iteritems():
@@ -264,10 +264,12 @@ class Play(object):
             i = len(subset)
             while i > 1:
                 permutations = itertools.permutations(subset, i)
-                for r in permutations:
-                    if is_consecutive(r, trump_rank):
-                        self.combinations.append({'n': len(r), 'consecutive': True, 'rank': RANKS[max(map(RANKS.index, r))]})
-                        for rank in r:
+                for p in permutations:
+                    if is_consecutive(p, trump_suit, trump_rank):
+                        self.combinations.append(
+                            {'n': len(p), 'consecutive': True,
+                             'rank': RANKS[max(RANKS.index(card.get_rank(trump_suit, trump_rank)) for card in p)]})
+                        for rank in p:
                             del ranks[rank]
                             subset.remove(rank)
                         i = len(subset)
@@ -276,7 +278,7 @@ class Play(object):
                     i -= 1
 
         for k, v in ranks.iteritems():
-            self.combinations.append({'n': v, 'consecutive': False, 'rank': k})
+            self.combinations.append({'n': v, 'consecutive': False, 'rank': k.get_rank(trump_suit, trump_rank)})
 
     def encode(self):
         return json.dumps({'suit': self.suit, 'combinations': self.combinations})
