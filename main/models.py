@@ -122,14 +122,16 @@ def create_deck():
             [Card(suit, JOKER) for suit in JOKER_SUITS])
 
 
-def is_consecutive(rank1, rank2, trump_rank):
-    if trump_rank in (rank1, rank2):
+def is_consecutive(ranks, trump_rank):
+    if len(ranks) < 2 or trump_rank in ranks:
         return False
 
-    rank1 = NORMAL_RANKS.index(rank1)
-    rank2 = NORMAL_RANKS.index(rank2)
+    ranks = map(NORMAL_RANKS.index, ranks)
     trump_rank = NORMAL_RANKS.index(trump_rank)
-    return rank1 + 1 == rank2 or (rank1 + 1 == trump_rank and rank1 + 2 == rank2)
+    min_rank = min(ranks)
+    max_rank = max(ranks)
+    return (sorted(ranks + [trump_rank]) == range(min_rank, max_rank + 1) if min_rank < trump_rank < max_rank else
+            sorted(ranks) == range(min_rank, max_rank + 1))
 
 
 class Hand(object):

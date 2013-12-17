@@ -15,12 +15,21 @@ from main.models import *
 
 class CardTest(TestCase):
     def test_consecutive(self):
+        ranks1 = [TWO, THREE]
+        ranks2 = [TWO, FOUR]
+        ranks3 = [TWO, THREE, FOUR]
+
         # Normal case
-        self.assertTrue(is_consecutive(TWO, THREE, FOUR))
-        self.assertFalse(is_consecutive(TWO, FOUR, FIVE))
+        self.assertTrue(is_consecutive(ranks1, FOUR))
+        self.assertFalse(is_consecutive(ranks2, FIVE))
+        self.assertTrue(is_consecutive(ranks3, FIVE))
 
         # Normal case with trump_rank in between
-        self.assertTrue(is_consecutive(TWO, FOUR, THREE))
+        self.assertTrue(is_consecutive(ranks2, THREE))
 
-        self.assertFalse(is_consecutive(TWO, TWO, TWO))
-        self.assertFalse(is_consecutive(TWO, TWO, THREE))
+        # Trump rank in cards
+        self.assertFalse(is_consecutive(ranks2, TWO))
+        self.assertFalse(is_consecutive(ranks2, FOUR))
+        self.assertFalse(is_consecutive(ranks3, TWO))
+        self.assertFalse(is_consecutive(ranks3, THREE))
+        self.assertFalse(is_consecutive(ranks3, FOUR))
