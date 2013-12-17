@@ -1,5 +1,6 @@
 from collections import Counter
 from functools import total_ordering
+import json
 import random
 import itertools
 
@@ -276,6 +277,17 @@ class Play(object):
 
         for k, v in ranks.iteritems():
             self.combinations.append({'n': v, 'consecutive': False, 'rank': k})
+
+    def encode(self):
+        return json.dumps({'suit': self.suit, 'combinations': self.combinations})
+
+    @classmethod
+    def decode(cls, s):
+        play_dict = json.loads(s)
+        play = cls()
+        play.suit = play_dict['suit']
+        play.combinations = play_dict['combinations']
+        return play
 
 
 class Game(models.Model):
