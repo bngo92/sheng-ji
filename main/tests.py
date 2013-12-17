@@ -11,11 +11,12 @@ from main.models import *
 
 class CardTest(TestCase):
     def test_consecutive(self):
-        two = Card('', TWO)
-        three = Card('', THREE)
-        four = Card('', FOUR)
+        # Normal case
+        self.assertTrue(is_consecutive(TWO, THREE, FOUR))
+        self.assertFalse(is_consecutive(TWO, FOUR, FIVE))
 
-        self.assertFalse(two.is_consecutive(two, THREE))
-        self.assertTrue(two.is_consecutive(three, FOUR))
-        self.assertFalse(two.is_consecutive(three, THREE))
-        self.assertTrue(two.is_consecutive(four, THREE))
+        # Normal case with trump_rank in between
+        self.assertTrue(is_consecutive(TWO, FOUR, THREE))
+
+        self.assertFalse(is_consecutive(TWO, TWO, TWO))
+        self.assertFalse(is_consecutive(TWO, TWO, THREE))
