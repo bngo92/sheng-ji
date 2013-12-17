@@ -195,33 +195,34 @@ class Hand(object):
 
 
 class Play(object):
-    def __init__(self, cards, trump_suit, trump_rank):
+    def __init__(self, cards, trump_suit, trump_rank, consecutive=True):
         self.suit = next(iter(cards)).get_suit(trump_suit, trump_rank)
         self.combinations = []
         ranks = Counter(card for card in cards)
 
-        subsets = {}
-        for k, v in ranks.iteritems():
-            if v >= 2:
-                subsets.setdefault(v, []).append(k)
+        if consecutive:
+            subsets = {}
+            for k, v in ranks.iteritems():
+                if v >= 2:
+                    subsets.setdefault(v, []).append(k)
 
-        for subset in subsets.itervalues():
-            i = len(subset)
-            while i > 1:
-                permutations = itertools.permutations(subset, i)
-                for p in permutations:
-                    if is_consecutive(p, trump_suit, trump_rank):
-                        self.combinations.append(
-                            {'n': len(p), 'consecutive': True,
-                             'rank': RANKS[max(RANKS.index(card.get_rank(trump_suit, trump_rank)) for card in p)],
-                             'cards': Hand(p)})
-                        for rank in p:
-                            del ranks[rank]
-                            subset.remove(rank)
-                        i = len(subset)
-                        break
-                else:
-                    i -= 1
+            for subset in subsets.itervalues():
+                i = len(subset)
+                while i > 1:
+                    permutations = itertools.permutations(subset, i)
+                    for p in permutations:
+                        if is_consecutive(p, trump_suit, trump_rank):
+                            self.combinations.append(
+                                {'n': len(p), 'consecutive': True,
+                                 'rank': RANKS[max(RANKS.index(card.get_rank(trump_suit, trump_rank)) for card in p)],
+                                 'cards': Hand(p)})
+                            for rank in p:
+                                del ranks[rank]
+                                subset.remove(rank)
+                            i = len(subset)
+                            break
+                    else:
+                        i -= 1
 
         for k, v in ranks.iteritems():
             self.combinations.append({'n': v, 'consecutive': False, 'rank': k.get_rank(trump_suit, trump_rank)})
