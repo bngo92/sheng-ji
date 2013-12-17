@@ -5,6 +5,10 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
+import os
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "game.settings")
+
 from django.test import TestCase
 from main.models import *
 
