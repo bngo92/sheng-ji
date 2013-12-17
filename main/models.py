@@ -116,6 +116,15 @@ class Card(object):
         else:
             return self.suit
 
+    def is_consecutive(self, other, trump_rank):
+        if self.rank == trump_rank or other.rank == trump_rank:
+            return False
+
+        self_rank = NORMAL_RANKS.index(self.rank)
+        other_rank = NORMAL_RANKS.index(other.rank)
+        trump_rank = NORMAL_RANKS.index(trump_rank)
+        return self_rank + 1 == other_rank or (self_rank + 1 == trump_rank and self_rank + 2 == other_rank)
+
 
 def create_deck():
     return ([Card(suit, rank) for suit in NORMAL_SUITS for rank in NORMAL_RANKS] +
