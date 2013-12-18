@@ -27,7 +27,7 @@ class CardTest(TestCase):
         self.assertTrue(is_consecutive(ranks4, HEARTS, TWO))
 
         # Normal case with trump_rank in between
-        self.assertTrue(is_consecutive(ranks2, HEARTS,THREE))
+        self.assertTrue(is_consecutive(ranks2, HEARTS, THREE))
 
 
 class PlayTest(TestCase):
@@ -40,12 +40,12 @@ class PlayTest(TestCase):
 
         combination = play.combinations[0]
         self.assertTrue(combination['n'] == 1)
-        self.assertFalse(combination['consecutive'])
+        self.assertTrue(combination['consecutive'] == 1)
         self.assertTrue(combination['rank'] == OFFSUIT_TRUMP)
 
         combination = play.combinations[1]
         self.assertTrue(combination['n'] == 1)
-        self.assertFalse(combination['consecutive'])
+        self.assertTrue(combination['consecutive'] == 1)
         self.assertTrue(combination['rank'] == OFFSUIT_TRUMP)
 
         # tractor
@@ -56,7 +56,7 @@ class PlayTest(TestCase):
 
         combination = play.combinations[0]
         self.assertTrue(combination['n'] == 2)
-        self.assertTrue(combination['consecutive'])
+        self.assertTrue(combination['consecutive'] == 2)
         self.assertTrue(combination['rank'] == THREE)
 
         # combination
@@ -67,11 +67,11 @@ class PlayTest(TestCase):
 
         combination = play.combinations[0]
         self.assertTrue(combination['n'] == 1)
-        self.assertFalse(combination['consecutive'])
+        self.assertTrue(combination['consecutive'] == 1)
         rank1 = combination['rank']
 
         combination = play.combinations[1]
         self.assertTrue(combination['n'] == 1)
-        self.assertFalse(combination['consecutive'])
+        self.assertTrue(combination['consecutive'] == 1)
         rank2 = combination['rank']
         self.assertTrue(sorted([rank1, rank2]) == sorted([TWO, THREE]))
