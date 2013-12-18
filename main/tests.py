@@ -89,10 +89,18 @@ class GameTest(TestCase):
         players_cycle = itertools.cycle(players)
         while game.stage == Game.DEAL:
             player = next(players_cycle)
-            if len(Hand.fromstr(player.hand)) == game.hand_size() and player == players[0]:
+            if not game.deal(player):
                 break
-            game.deal(player)
 
         for player in players:
             self.assertTrue(len(Hand.fromstr(player.hand)) == game.hand_size())
         self.assertTrue(len(Hand.fromstr(game.deck)) == game.reserve_size())
+
+        player = players[0]
+        self.assertIsNone(game.pickup_reserve(player))
+        self.assertTrue(len(Hand.fromstr(player.hand)) == game.hand_size() + game.reserve_size())
+        self.assertTrue(len(Hand.fromstr(game.deck)) == 0)
+
+        self.assertIsNone(game.reserve(player, player.get_hand().cards[:8]))
+        self.assertTrue(len(Hand.fromstr(player.hand)) == game.hand_size())
+        self.assertTrue(len(Hand.fromstr(game.kitty)) == game.reserve_size())

@@ -130,20 +130,6 @@ def play(request, game_id):
 def reserve(request, game_id):
     if request.method == "POST":
         game = Game.objects.get(id=game_id)
-        players = game.gameplayer_set.all()
         player = game.gameplayer_set.get(player__user=request.user)
-        if game.stage == Game.DEAL and player.your_turn() and len(player.get_hand()):
-            reserve = Hand.fromstr(game.deck)
-            game.deck = ''
-            game.stage = Game.RESERVE
-            game.save()
-
-            player_hand = player.get_hand()
-            player_hand.add_cards(reserve.cards)
-            player.hand = str(player_hand)
-            player.save()
-
-            for player in players:
-                player.play = ''
-                player.save()
+        game.pickup_reserve(player)
     return HttpResponse()

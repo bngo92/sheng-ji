@@ -396,6 +396,24 @@ class Game(models.Model):
         else:
             return "Not enough cards to change trump suit"
 
+    def pickup_reserve(self, player):
+        if self.stage != Game.DEAL or player.turn != 0 or len(player.get_hand()) != self.hand_size():
+            return False
+
+        reserve = Hand.fromstr(self.deck)
+        self.deck = ''
+        self.stage = Game.RESERVE
+        self.save()
+
+        player_hand = player.get_hand()
+        player_hand.add_cards(reserve.cards)
+        player.hand = str(player_hand)
+        player.save()
+
+        for player in self.gameplayer_set.all():
+            player.play = ''
+            player.save()
+
     def reserve(self, player, cards):
         if self.stage != Game.RESERVE or player.turn != 0:
             return False
@@ -417,7 +435,6 @@ class Game(models.Model):
         self.turn = 0
         self.trick_turn = 0
         self.save()
-        return True
 
     def play(self, player, cards):
         if self.stage != Game.PLAY or not player.your_turn():
