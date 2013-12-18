@@ -253,25 +253,16 @@ class Game(models.Model):
         (SCORE, 'Score'),
     )
 
-    SINGLE = 'A'
-    CONSECUTIVE = 'B'
-    COMBINATION = 'C'
-    PLAY_CHOICES = (
-        (SINGLE, 'Single'),
-        (CONSECUTIVE, 'Consecutive'),
-        (COMBINATION, 'Combination'),
-    )
-
     # Game details
     stage = models.CharField(max_length=1, choices=STAGE_CHOICES, default=SETUP)
     turn = models.IntegerField(default=0)
     trick_turn = models.IntegerField(default=0)
+    trick_points = models.IntegerField(default=0)
 
     # Cards
     deck = models.CharField(max_length=1000)
     kitty = models.CharField(max_length=100)
-    #lead_play = models.CharField(max_length=100)
-    #lead_play_n = models.IntegerField()
+    lead = models.IntegerField(default=0)
 
     # Trump details
     trump_rank = models.CharField(max_length=1, choices=RANK_CHOICES)
@@ -527,11 +518,21 @@ class Game(models.Model):
         player.save()
 
         self.trick_turn += 1
+        self.trick_points += (5 * len([card for card in cards if card.rank == FIVE]) +
+                              10 * len([card for card in cards if card.rank == TEN or card.rank == KING]))
 
         # Evaluate plays on last turn
         if self.trick_turn == self.number_of_players():
+            lead = self.gameplayer_set.all()[self.lead]
+            lead.points += self.trick_points
+            lead.save()
+
             self.turn = self.lead
             self.trick_turn = 0
+            self.trick_points = 0
+
+            if len(player_hand) == 0:
+                self.stage = Game.SCORE
 
         self.save()
         return True
