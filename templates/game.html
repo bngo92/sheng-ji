@@ -37,10 +37,14 @@
         if (reserve.length == 0) {
           $("#buttons").append($("<button id='reserve' class='btn btn-success'>Reserve</buton>")
             .click(function() {
-              $.post("{% url 'reserve' id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function() {
+              $.post("{% url 'reserve' id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
+                if (data) {
+                  alert(data);
+                } else {
                   $("#reserve").remove();
                   load(true);
-                });
+                }
+              });
             })
           );
         }
@@ -56,7 +60,10 @@
             $("#play").children("img").each(function() {
               a.push($(this).attr("class"));
             });
-            $.post("{% url 'play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"});
+            $.post("{% url 'play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
+              if (data) alert(data);
+              load(true);
+            });
           });
         } else {
           play_btn.attr("disabled", "disabled");
@@ -124,7 +131,8 @@
       $("#play").children("img").each(function() {
         a.push($(this).attr("class"));
       });
-      $.post("{% url 'main.views.play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function() {
+      $.post("{% url 'main.views.play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
+        if (data) alert(data);
         load(true);
       });
     });

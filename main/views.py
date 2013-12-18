@@ -16,6 +16,16 @@ def render(request, template_name, additional=None):
     return django_render(request, template_name, additional)
 
 
+def send_message(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        if result:
+            return HttpResponse(result)
+        else:
+            return HttpResponse()
+    return wrapper
+
+
 def home(request):
     if request.user.is_authenticated():
         return render(request, "home.html",
@@ -81,14 +91,13 @@ def status(request, game_id):
 
 
 @login_required(login_url=home)
+@send_message
 def ready(request, game_id):
     game = Game.objects.get(id=game_id)
     player = game.gameplayer_set.get(player__user=request.user)
 
     if game.stage == Game.SETUP:
         game.ready(player)
-
-    return HttpResponse()
 
 
 @login_required(login_url=home)
@@ -106,18 +115,20 @@ def new_game(request):
 
 
 @login_required(login_url=home)
+@send_message
 def play(request, game_id):
     game = Game.objects.get(id=game_id)
     player = game.gameplayer_set.get(player__user=request.user)
     if request.method == "POST":
         cards = Hand.fromstr(request.POST['data']).cards
+        if not cards:
+            return "No cards were played"
         if game.stage == Game.DEAL:
-            game.set_trump_suit(player, cards)
+            return game.set_trump_suit(player, cards)
         if game.stage == Game.RESERVE:
-            game.reserve(player, cards)
+            return game.reserve(player, cards)
         if game.stage == Game.PLAY:
-            game.play(player, cards)
-    return HttpResponse()
+            return game.play(player, cards)
 
 
 @login_required(login_url=home)
