@@ -214,7 +214,7 @@ class Play(object):
                         if is_consecutive(p, trump_suit, trump_rank):
                             self.combinations.append(
                                 {'n': len(p), 'consecutive': True,
-                                 'rank': RANKS[max(RANKS.index(card.get_rank(trump_suit, trump_rank)) for card in p)],
+                                 'rank': max(card.get_rank(trump_suit, trump_rank) for card in p),
                                  'cards': Hand(p)})
                             for rank in p:
                                 del ranks[rank]
