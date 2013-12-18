@@ -422,24 +422,59 @@ class Game(models.Model):
         if cards not in player_hand:
             return False
 
+        play = Hand(cards)
         if self.trick_turn == 0:
-            if len(set(cards)) == 1:
-                player_hand.play_cards(cards)
-                self.lead_play = str(len(cards))
-            elif len(set(cards)) == 2:
-                tractor = list(set(cards))
-                if (len([card for card in cards if card == tractor[0]]) ==
-                        len([card for card in cards if card == tractor[1]])):
-                    player_hand.play_cards(cards)
+            # First player has to play a single suit
+            suit = play.single_suit(self.trump_suit, self.trump_rank)
+            if suit is None or (suit == TRUMP and not self.trump_broken):
+                return False
 
-        else:
-            #first_hand = Hand.fromstr(self.hands.split(';', 1))
-            pass
+            play = Play(play.cards, self.trump_suit, self.trump_rank)
+            if len(play.combinations) > 1:
+                highest = True
+                for other in self.gameplayer_set.all():
+                    if not highest:
+                        break
+
+                    if player == other:
+                        continue
+
+                    other_hand = [card for card in self.cards if card.suit == suit]
+                    other_play = Play(other_hand, self.trump_suit, self.trump_rank)
+
+                    for combination in play.combinations:
+                        if not highest:
+                            break
+
+                        if combination['consecutive']:
+                            continue
+
+                        for other_combination in other_play.combinations:
+                            if (combination['n'] <= other_combination['n'] and
+                                    combination['rank'] < other_combination['rank']):
+                                highest = False
+                                break
+
+                if not highest:
+                    playable_combinations = [combination for combination in play.combinations
+                                             if combination['consecutive']]
+                    playable_combinations.append(min((combination for combination in play.combinations
+                                                      if not combination['consecutive']), key=lambda c: c['rank']))
+                else:
+                    playable_combinations = play.combinations
+
+                play = Hand.fromstr(','.join(combination['cards'] for combination in playable_combinations))
+
+            player_hand.play_cards(play.cards)
+            player.hand = str(player_hand)
+            player.play = str(play)
+            player.save()
 
         player.hand = player_hand
         player.save()
         self.trick_turn += 1
 
+        # Evaluate plays on last turn
         if self.trick_turn == self.number_of_players():
             #hands = [Hand.fromstr(s) for s in self.hands.split(';')]
             #self.turn = winner
