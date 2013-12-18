@@ -81,12 +81,7 @@ def status(request, game_id):
             'cards': [card.repr() for card in sorted(player.get_hand().cards)],
             'new_cards': new_cards,
         },
-        'players': [{'name': player.__unicode__(),
-                     'cards': [card.repr()
-                               for card in Hand.fromstr(','.join(c['cards']
-                                                                 for c in player.get_play().combinations)).cards]
-                     if player.get_play() is not None else []}
-                    for player in players]
+        'players': [{'name': player.__unicode__(), 'cards': player.get_play().cards} for player in players]
     }), content_type='application/json')
 
 

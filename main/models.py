@@ -196,12 +196,14 @@ class Hand(object):
 
 class Play(object):
     def __init__(self, cards=None, trump_suit=None, trump_rank=None, consecutive=True):
+        self.cards = []
         self.suit = None
         self.combinations = None
         if cards is not None:
             self.init(cards, trump_suit, trump_rank, consecutive)
 
     def init(self, cards, trump_suit, trump_rank, consecutive=True):
+        self.cards = str(Hand(cards))
         self.suit = cards[0].get_suit(trump_suit, trump_rank)
         self.combinations = []
         ranks = Counter(card for card in cards)
@@ -220,8 +222,7 @@ class Play(object):
                         if is_consecutive(p, trump_suit, trump_rank):
                             self.combinations.append(
                                 {'n': n, 'consecutive': i,
-                                 'rank': max(card.get_rank(trump_suit, trump_rank) for card in p),
-                                 'cards': str(Hand(p))})
+                                 'rank': max(card.get_rank(trump_suit, trump_rank) for card in p)})
                             for rank in p:
                                 del ranks[rank]
                                 subset.remove(rank)
@@ -231,11 +232,10 @@ class Play(object):
                         i -= 1
 
         for k, v in ranks.iteritems():
-            self.combinations.append({'n': v, 'consecutive': 1,
-                                      'rank': k.get_rank(trump_suit, trump_rank), 'cards': str(k)})
+            self.combinations.append({'n': v, 'consecutive': 1, 'rank': k.get_rank(trump_suit, trump_rank)})
 
     def encode(self):
-        return json.dumps({'suit': self.suit, 'combinations': self.combinations})
+        return json.dumps({'suit': self.suit, 'combinations': self.combinations, 'cards': self.cards})
 
     @classmethod
     def decode(cls, s):
@@ -243,6 +243,7 @@ class Play(object):
         play = cls()
         play.suit = play_dict['suit']
         play.combinations = play_dict['combinations']
+        play.cards = play_dict['cards']
         return play
 
 

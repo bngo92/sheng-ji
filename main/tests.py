@@ -75,3 +75,24 @@ class PlayTest(TestCase):
         self.assertTrue(combination['consecutive'] == 1)
         rank2 = combination['rank']
         self.assertTrue(sorted([rank1, rank2]) == sorted([TWO, THREE]))
+
+
+class GameTest(TestCase):
+    def test_game(self):
+        players = [Player.create_player(s, s) for s in ('a', 'b', 'c', 'd')]
+        game = Game.setup(players)
+        players = game.gameplayer_set.all()
+
+        for player in players:
+            game.ready(player)
+
+        players_cycle = itertools.cycle(players)
+        while game.stage == Game.DEAL:
+            player = next(players_cycle)
+            if len(Hand.fromstr(player.hand)) == game.hand_size() and player == players[0]:
+                break
+            game.deal(player)
+
+        for player in players:
+            self.assertTrue(len(Hand.fromstr(player.hand)) == game.hand_size())
+        self.assertTrue(len(Hand.fromstr(game.deck)) == game.reserve_size())
