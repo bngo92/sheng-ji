@@ -196,6 +196,8 @@ class Hand(object):
 
 class Play(object):
     def __init__(self, cards=None, trump_suit=None, trump_rank=None, consecutive=True):
+        self.suit = None
+        self.combinations = None
         if cards is not None:
             self.init(cards, trump_suit, trump_rank, consecutive)
 
@@ -464,8 +466,6 @@ class Game(models.Model):
                                                       if combination['consecutive'] < 2), key=lambda c: c['rank']))
                 else:
                     playable_combinations = play.combinations
-
-                play = Hand.fromstr(','.join(combination['cards'] for combination in playable_combinations))
 
         else:
             # Other players have to play the suit that the first person played
