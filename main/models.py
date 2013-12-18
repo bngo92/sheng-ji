@@ -186,7 +186,7 @@ class Hand(object):
     def single_suit(self, trump_suit, trump_rank):
         suits = set(card.get_suit(trump_suit, trump_rank) for card in self.cards)
         if len(suits) == 1:
-            return next(iter(suits))
+            return suits.pop()
         else:
             return None
 
@@ -200,7 +200,7 @@ class Play(object):
             self.init(cards, trump_suit, trump_rank, consecutive)
 
     def init(self, cards, trump_suit, trump_rank, consecutive=True):
-        self.suit = next(iter(cards)).get_suit(trump_suit, trump_rank)
+        self.suit = cards[0].get_suit(trump_suit, trump_rank)
         self.combinations = []
         ranks = Counter(card for card in cards)
 
@@ -381,7 +381,7 @@ class Game(models.Model):
 
         if len(cards) > self.trump_count:
             self.trump_count = len(cards)
-            self.trump_suit = next(iter(cards)).suit
+            self.trump_suit = cards[0].suit
             self.save()
 
             play = Play(cards, self.trump_suit, self.trump_rank)
