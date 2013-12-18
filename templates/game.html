@@ -50,6 +50,7 @@
         var play_btn = $("#play-btn");
         if (data.turn) {
           play_btn.removeAttr("disabled", "disabled");
+          play_btn.off("click");
           play_btn.click(function() {
             var a = [];
             $("#play").children("img").each(function() {

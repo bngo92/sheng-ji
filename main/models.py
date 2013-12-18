@@ -195,7 +195,11 @@ class Hand(object):
 
 
 class Play(object):
-    def __init__(self, cards, trump_suit, trump_rank, consecutive=True):
+    def __init__(self, cards=None, trump_suit=None, trump_rank=None, consecutive=True):
+        if cards is not None:
+            self.init(cards, trump_suit, trump_rank, consecutive)
+
+    def init(self, cards, trump_suit, trump_rank, consecutive=True):
         self.suit = next(iter(cards)).get_suit(trump_suit, trump_rank)
         self.combinations = []
         ranks = Counter(card for card in cards)
@@ -215,7 +219,7 @@ class Play(object):
                             self.combinations.append(
                                 {'n': n, 'consecutive': i,
                                  'rank': max(card.get_rank(trump_suit, trump_rank) for card in p),
-                                 'cards': Hand(p)})
+                                 'cards': str(Hand(p))})
                             for rank in p:
                                 del ranks[rank]
                                 subset.remove(rank)
@@ -225,7 +229,8 @@ class Play(object):
                         i -= 1
 
         for k, v in ranks.iteritems():
-            self.combinations.append({'n': v, 'consecutive': 1, 'rank': k.get_rank(trump_suit, trump_rank)})
+            self.combinations.append({'n': v, 'consecutive': 1,
+                                      'rank': k.get_rank(trump_suit, trump_rank), 'cards': str(k)})
 
     def encode(self):
         return json.dumps({'suit': self.suit, 'combinations': self.combinations})
@@ -265,7 +270,7 @@ class Game(models.Model):
     lead = models.IntegerField(default=0)
 
     # Trump details
-    trump_rank = models.CharField(max_length=1, choices=RANK_CHOICES)
+    trump_rank = models.IntegerField(choices=RANK_CHOICES)
     trump_suit = models.CharField(max_length=1, choices=SUIT_CHOICES, default=RED)
     trump_count = models.IntegerField(default=0)
     trump_broken = models.BooleanField(default=False)
@@ -304,6 +309,7 @@ class Game(models.Model):
     @classmethod
     def setup(cls, players):
         game = cls()
+        game.trump_rank = players[0].rank
         game.save()
 
         try:
@@ -378,8 +384,8 @@ class Game(models.Model):
             self.trump_suit = next(iter(cards)).suit
             self.save()
 
-            play = Hand(cards)
-            player.play = str(play)
+            play = Play(cards, self.trump_suit, self.trump_rank)
+            player.play = play.encode()
             player.save()
 
     def reserve(self, player, cards):
@@ -406,7 +412,7 @@ class Game(models.Model):
         return True
 
     def play(self, player, cards):
-        if self.stage != Game.DEAL or not player.your_turn():
+        if self.stage != Game.PLAY or not player.your_turn():
             return False
 
         player_hand = Hand.fromstr(player.hand)
@@ -469,7 +475,7 @@ class Game(models.Model):
 
             lead_play = Play.decode(self.gameplayer_set.all()[self.turn].play)
             play = Play(play.cards, self.trump_suit, self.trump_rank)
-            after_play = Play([card for card in player_hand.cards if card.get_suit() == suit], self.trump_suit, self.trump_rank)
+            after_play = Play([card for card in player_hand.cards if card.get_suit(self.trump_suit, self.trump_rank) == suit], self.trump_suit, self.trump_rank)
 
             lead_rank = max(combination['rank'] for combination in lead_play.combinations)
             rank = max(combination['rank'] for combination in play.combinations)
@@ -514,7 +520,7 @@ class Game(models.Model):
                 self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
         player.hand = str(player_hand)
-        player.play = play.encode()
+        player.play = Play(cards, self.trump_suit, self.trump_rank).encode()
         player.save()
 
         self.trick_turn += 1
@@ -540,7 +546,7 @@ class Game(models.Model):
 
 class Player(models.Model):
     user = models.ForeignKey(User)
-    rank = models.CharField(max_length=1, choices=RANK_CHOICES, default=TWO)
+    rank = models.IntegerField(choices=RANK_CHOICES, default=TWO)
 
     def __unicode__(self):
         return self.user.__unicode__()
@@ -577,7 +583,10 @@ class GamePlayer(models.Model):
         return (self.game.turn + self.game.trick_turn) % self.game.number_of_players() == self.turn
 
     def get_play(self):
-        return Hand.fromstr(self.play)
+        if self.play:
+            return Play.decode(self.play)
+        else:
+            return None
 
 
 class LoginForm(forms.Form):
