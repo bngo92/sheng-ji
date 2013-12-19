@@ -63,6 +63,7 @@
             $.post("{% url 'play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
               if (data) {
                 alert(data);
+              } else {
                 load(true);
               }
             });
@@ -136,6 +137,7 @@
       $.post("{% url 'main.views.play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
         if (data) {
           alert(data);
+        } else {
           load(true);
         }
       });
