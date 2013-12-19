@@ -266,7 +266,9 @@ class Game(models.Model):
 
     # Trump details
     trump_rank = models.IntegerField(choices=RANK_CHOICES)
+    def get_trump_rank_display(self): return dict(RANK_CHOICES)[self.trump_rank]
     trump_suit = models.CharField(max_length=1, choices=SUIT_CHOICES, default=RED)
+    def get_trump_suit_display(self): return dict(SUIT_CHOICES)[self.trump_suit]
     trump_count = models.IntegerField(default=0)
     trump_broken = models.BooleanField(default=False)
 
