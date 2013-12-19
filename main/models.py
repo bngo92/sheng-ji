@@ -22,28 +22,21 @@ DIAMONDS = 'D'
 HEARTS = 'H'
 SPADES = 'S'
 NORMAL_SUITS = (CLUBS, DIAMONDS, HEARTS, SPADES)
-BLACK = 'B'
-RED = 'R'
+JOKER = 'J'
 TRUMP = 'TRUMP'
-JOKER_SUITS = (BLACK, RED)
-SUITS = NORMAL_SUITS + JOKER_SUITS
+SUITS = NORMAL_SUITS + (JOKER,)
 SUIT_CHOICES = (
     (CLUBS, 'Clubs'),
     (DIAMONDS, 'Diamonds'),
     (HEARTS, 'Hearts'),
     (SPADES, 'Spades'),
     # jokers
-    (BLACK, 'Black'),
-    (RED, 'Red'),
+    (JOKER, 'Joker'),
 )
 
-TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE, JOKER = range(2, 2 + 14)
-OFFSUIT_TRUMP = JOKER
-ONSUIT_TRUMP = JOKER + 1
-SMALL_JOKER = JOKER + 2
-BIG_JOKER = JOKER + 3
+TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE, OFFSUIT_TRUMP, ONSUIT_TRUMP, BLACK, RED = range(2, 2 + 17)
 NORMAL_RANKS = (TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE)
-RANKS = NORMAL_RANKS + (OFFSUIT_TRUMP, ONSUIT_TRUMP, SMALL_JOKER, BIG_JOKER)
+RANKS = NORMAL_RANKS + (OFFSUIT_TRUMP, ONSUIT_TRUMP, BLACK, RED)
 RANK_CHOICES = (
     (TWO, '2'),
     (THREE, '3'),
@@ -59,7 +52,8 @@ RANK_CHOICES = (
     (KING, 'King'),
     (ACE, 'Ace'),
     #jokers
-    (JOKER, 'Jokers'),
+    (BLACK, 'Black'),
+    (RED, 'Red'),
 )
 
 
@@ -92,7 +86,7 @@ class Card(object):
         return {'card': str(self), 'image': self.image()}
 
     def is_trump(self, trump_suit, trump_rank):
-        return self.suit == trump_suit or self.rank in (trump_rank, JOKER)
+        return self.suit in (trump_suit, JOKER) or self.rank == trump_rank
 
     def get_suit(self, trump_suit, trump_rank):
         if self.is_trump(trump_suit, trump_rank):
@@ -101,12 +95,7 @@ class Card(object):
             return self.suit
 
     def get_rank(self, trump_suit, trump_rank):
-        if self.rank == JOKER:
-            if self.suit == BLACK:
-                return SMALL_JOKER
-            else:
-                return BIG_JOKER
-        elif self.rank == trump_rank:
+        if self.rank == trump_rank:
             if self.suit == trump_suit:
                 return ONSUIT_TRUMP
             else:
@@ -117,7 +106,7 @@ class Card(object):
 
 def create_deck():
     return ([Card(suit, rank) for suit in NORMAL_SUITS for rank in NORMAL_RANKS] +
-            [Card(suit, JOKER) for suit in JOKER_SUITS])
+            [Card(JOKER, rank) for rank in (BLACK, RED)])
 
 
 def is_consecutive(cards, trump_suit, trump_rank):

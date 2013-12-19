@@ -18,7 +18,7 @@ class CardTest(TestCase):
         ranks1 = Hand.fromstr("S2,S3").cards
         ranks2 = Hand.fromstr("S2,S4").cards
         ranks3 = Hand.fromstr("S2,S3,S4").cards
-        ranks4 = Hand.fromstr("S14,S2,H2,B15,R15").cards
+        ranks4 = Hand.fromstr("S14,S2,H2,J17,J18").cards
 
         # Normal case
         self.assertTrue(is_consecutive(ranks1, HEARTS, FOUR))
@@ -31,7 +31,102 @@ class CardTest(TestCase):
 
 
 class PlayTest(TestCase):
+    def assert_combination(self, combination, n, consecutive, rank):
+        self.assertTrue(combination['n'] == n)
+        self.assertTrue(combination['consecutive'] == consecutive)
+        self.assertTrue(combination['rank'] == rank)
+
     def test_init(self):
+        trump_suit = CLUBS
+        trump_rank = SEVEN
+
+        s = "H5,H5,H4,H4"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == HEARTS)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 1)
+        self.assert_combination(play.combinations[0], 2, 2, FIVE)
+
+        s = "S11,S11,S10,S10,S9,S9,S8,S8"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == SPADES)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 1)
+        self.assert_combination(play.combinations[0], 2, 4, JACK)
+
+        s = "C5,C5,C4,C4,C3,C3"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == TRUMP)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 1)
+        self.assert_combination(play.combinations[0], 2, 3, FIVE)
+
+        s = "D8,D8,D6,D6"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == DIAMONDS)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 1)
+        self.assert_combination(play.combinations[0], 2, 2, EIGHT)
+
+        s = "C7,C7,D7,D7,C14,C14"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == TRUMP)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 1)
+        self.assert_combination(play.combinations[0], 2, 3, ONSUIT_TRUMP)
+
+        s = "J18,J18,J17,J17,C7,C7"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == TRUMP)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 1)
+        self.assert_combination(play.combinations[0], 2, 3, RED)
+
+        s = "H10,H10,H8,H8"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == HEARTS)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 2)
+        self.assert_combination(play.combinations[0], 2, 1, TEN)
+        self.assert_combination(play.combinations[1], 2, 1, EIGHT)
+
+        s = "S9,S9,D8,D8"
+        hand = Hand.fromstr(s)
+        self.assertFalse(hand.single_suit(trump_suit, trump_rank))
+
+        s = "H7,H7,H6,H6"
+        hand = Hand.fromstr(s)
+        self.assertFalse(hand.single_suit(trump_suit, trump_rank))
+
+        s = "C7,C7,C6,C6"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == TRUMP)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 2)
+        self.assert_combination(play.combinations[0], 2, 1, ONSUIT_TRUMP)
+        self.assert_combination(play.combinations[1], 2, 1, SIX)
+
+        s = "S7,S7,D7,D7"
+        cards = Hand.fromstr(s).cards
+        play = Play(cards, trump_suit, trump_rank)
+        self.assertTrue(play.suit == TRUMP)
+        self.assertTrue(play.cards == s)
+        self.assertTrue(len(play.combinations) == 2)
+        self.assert_combination(play.combinations[0], 2, 1, OFFSUIT_TRUMP)
+        self.assert_combination(play.combinations[1], 2, 1, OFFSUIT_TRUMP)
+
+        s = "C2,C2,S14,S14"
+        hand = Hand.fromstr(s)
+        self.assertFalse(hand.single_suit(trump_suit, trump_rank))
+
         # pair of offsuit trump
         cards = Hand.fromstr("S2,D2").cards
         play = Play(cards, HEARTS, TWO)
@@ -39,9 +134,7 @@ class PlayTest(TestCase):
         self.assertTrue(len(play.combinations) == 2)
 
         combination = play.combinations[0]
-        self.assertTrue(combination['n'] == 1)
-        self.assertTrue(combination['consecutive'] == 1)
-        self.assertTrue(combination['rank'] == OFFSUIT_TRUMP)
+        self.assert_combination(combination, 1, 1, OFFSUIT_TRUMP)
 
         combination = play.combinations[1]
         self.assertTrue(combination['n'] == 1)
