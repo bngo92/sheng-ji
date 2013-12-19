@@ -447,7 +447,7 @@ class Game(models.Model):
             if suit is None:
                 return "Cards have to be a single suit"
             if suit == TRUMP and not self.trump_broken:
-                if set(cards.get_suit(self.trump_suit, self.trump_rank)) != set(TRUMP):
+                if set(card.get_suit(self.trump_suit, self.trump_rank) for card in cards) != set(TRUMP):
                     return "Trump hasn't been broken yet"
                 else:
                     self.trump_broken = True
