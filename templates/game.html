@@ -31,6 +31,7 @@
       $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
       $("#trump-rank").text("Trump Rank: "+data.status.trump_rank);
       $("#turn").text("Turn: "+data.status.turn);
+      $("#points").text("Points: "+data.status.points);
 
       if (data.reserve) {
         var reserve = $("#reserve");
@@ -61,8 +62,10 @@
               a.push($(this).attr("class"));
             });
             $.post("{% url 'play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
-              if (data) alert(data);
-              load(true);
+              if (data) {
+                alert(data);
+                load(true);
+              }
             });
           });
         } else {
@@ -132,8 +135,10 @@
         a.push($(this).attr("class"));
       });
       $.post("{% url 'main.views.play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
-        if (data) alert(data);
-        load(true);
+        if (data) {
+          alert(data);
+          load(true);
+        }
       });
     });
   }
@@ -142,6 +147,7 @@
   <span id="trump-suit"></span>
   <span id="trump-rank"></span>
   <span id="turn"></span>
+  <span id="points"></span>
 </div>
 <div class="col-md-8">
   <h4>Hand</h4>
@@ -152,7 +158,5 @@
     <button id="play-btn" class="btn btn-primary">Play</button>
     <button id="refresh-btn" class="btn btn-default">Refresh</button>
   </div>
-</div>
-<div id="players" class="col-md-4">
 </div>
 {% endblock %}
