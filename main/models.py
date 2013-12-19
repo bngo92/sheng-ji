@@ -499,7 +499,7 @@ class Game(models.Model):
             suit = cards_played.single_suit(self.trump_suit, self.trump_rank)
             after = Hand(player_hand.cards)
             after.play_cards(cards)
-            if (not suit or suit != lead_play.suit) and after.has_suit(suit, self.trump_suit, self.trump_rank):
+            if (not suit or suit != lead_play.suit) and after.has_suit(lead_play.suit, self.trump_suit, self.trump_rank):
                 return "Play leading suit"
             elif suit in (lead_play.suit, TRUMP):
                 if suit == TRUMP:
