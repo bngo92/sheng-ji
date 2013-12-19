@@ -490,7 +490,7 @@ class Game(models.Model):
 
         else:
             # Other players have to play the same number of cards that the first person played
-            lead_play = Play.decode(self.gameplayer_set.all()[self.lead].play)
+            lead_play = Play.decode(self.gameplayer_set.all()[self.turn].play)
             if len(Hand.fromstr(lead_play.cards)) != len(cards):
                 return "Play same amount of cards"
 
