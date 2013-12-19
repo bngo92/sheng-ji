@@ -78,7 +78,9 @@ def status(request, game_id):
         'hand': {
             'player': player.__unicode__(),
             'str': ','.join(str(card) for card in sorted(player.get_hand().cards)),
-            'cards': [card.repr() for card in sorted(player.get_hand().cards)],
+            'cards': [card.repr() for card in sorted(player.get_hand().cards,
+                                                     key=lambda c: (c.get_suit(game.trump_suit, game.trump_rank),
+                                                                    c.get_rank(game.trump_broken, game.trump_rank)))],
             'new_cards': new_cards,
         },
         'players': [{'name': player.__unicode__(),
