@@ -548,7 +548,7 @@ class Game(models.Model):
                     if any(lead_combination['n'] == combination['n'] for combination in after_play.combinations):
                         return "Pairs have to be played"
 
-                if valid and (suit == TRUMP and self.lead_suit != TRUMP or play.rank > lead_play.rank):
+                if valid and (suit == TRUMP and lead_play.suit != TRUMP or play.rank > lead_play.rank):
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
         player_hand.play_cards(cards)
