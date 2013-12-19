@@ -497,15 +497,13 @@ class Game(models.Model):
             # Other players have to play the suit that the first person played
             cards_played = Hand(cards)
             suit = cards_played.single_suit(self.trump_suit, self.trump_rank)
-            if not suit:
-                if player_hand.has_suit(suit, self.trump_suit, self.trump_rank):
-                    return "Play leading suit"
+            if (not suit or suit != lead_play.suit) and player_hand.has_suit(suit, self.trump_suit, self.trump_rank):
+                return "Play leading suit"
+            elif suit in (lead_play.suit, TRUMP):
                 if suit == TRUMP:
                     self.trump_broken = True
-            else:
-                lead_rank = max(combination['rank'] for combination in lead_play.combinations)
+
                 play = Play(cards_played.cards, self.trump_suit, self.trump_rank)
-                rank = max(combination['rank'] for combination in play.combinations)
                 valid = True
 
                 # Check which combinations are matched
@@ -548,7 +546,7 @@ class Game(models.Model):
                     if any(lead_combination['n'] == combination['n'] for combination in after_play.combinations):
                         return "Pairs have to be played"
 
-                if valid and (suit == TRUMP and self.lead_suit != TRUMP or rank > lead_rank):
+                if valid and (suit == TRUMP and self.lead_suit != TRUMP or play.rank > lead_play.rank):
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
         player_hand.play_cards(cards)
