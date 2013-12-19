@@ -82,6 +82,7 @@ def status(request, game_id):
             'new_cards': new_cards,
         },
         'players': [{'name': player.__unicode__(),
+                     'ready': player.ready,
                      'points': player.points,
                      'cards': [card.repr()
                                for card in sorted(Hand.fromstr(player.get_play().cards).cards)]

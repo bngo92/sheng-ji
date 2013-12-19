@@ -100,7 +100,13 @@
       playersElement.empty();
       for (i = 0; i < players.length; i++) {
         var player = players[i];
-        playersElement.append($("<h5>"+player.name+" ("+player.points+")</h5>"));
+        var $player = $("<button>").addClass("btn").text(player.name+" ("+player.points+")");
+        if (player.ready) {
+          $player.addClass("btn-success");
+        } else {
+          $player.addClass("btn-danger");
+        }
+        playersElement.append($player);
         cards = player.cards;
         for (var j = 0; j < cards.length; j++) {
           playersElement
