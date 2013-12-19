@@ -5,7 +5,7 @@
   $(document).ready(function() {
     setInterval(function() {
       var title = document.title;
-      if (window.turn) {
+      if (window.turn && window.stage == 4) {
         document.title = (title == "80 Points" ? "Your Turn!" : "80 Points");
       } else {
         document.title = "80 Points";
@@ -14,13 +14,13 @@
     $("#refresh-btn").click(function() {
       load(true);
     });
-    $.getJSON("{% url 'main.views.status' id %}", function(data) {
+    $.getJSON("{% url 'main.views.status' game.id %}", function(data) {
       var play_btn = $("#play-btn");
       if (!data.ready) {
         play_btn.text("Ready");
         play_btn.click(function() {
           play_btn.text("Play");
-          $.ajax("{% url 'main.views.ready' id %}")
+          $.ajax("{% url 'main.views.ready' game.id %}")
             .success(function() {
               move(play_btn);
               load(true);
@@ -35,7 +35,7 @@
 
   function load(force) {
     clearTimeout(window.handle);
-    $.getJSON("{% url 'main.views.status' id %}", function(data) {
+    $.getJSON("{% url 'main.views.status' game.id %}", function(data) {
       $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
       $("#trump-rank").text("Trump Rank: "+data.status.trump_rank);
       $("#turn").text("Turn: "+data.status.turn);
@@ -45,7 +45,7 @@
         if (reserve.length == 0) {
           $("#buttons").append($("<button id='reserve' class='btn btn-success'>Reserve</buton>")
             .click(function() {
-              $.post("{% url 'reserve' id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
+              $.post("{% url 'reserve' game.id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
                 if (data) {
                   alert(data);
                 } else {
@@ -58,6 +58,7 @@
         }
       }
 
+      window.stage = data.stage;
       if (data.stage == 4) {
         var play_btn = $("#play-btn");
         if (data.turn) {
@@ -69,7 +70,7 @@
             $("#play").children("img").each(function() {
               a.push($(this).attr("class"));
             });
-            $.post("{% url 'play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
+            $.post("{% url 'play' game.id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
               if (data) {
                 alert(data);
               } else {
@@ -106,22 +107,27 @@
       }
 
       var players = data.players;
-      var playersElement = $("#players");
-      playersElement.empty();
       for (i = 0; i < players.length; i++) {
         var player = players[i];
-        var $player = $("<button>").addClass("btn").text(player.name+" ("+player.points+")");
-        if (player.ready) {
-          $player.addClass("btn-success");
+        var $player = $("#"+player.name);
+        var $playerButton = $player.children("button").attr("class", "btn").text(player.name+" ("+player.points+")");
+        if (data.stage == 1) {
+          if (player.ready) {
+            $playerButton.addClass("btn-success");
+          } else {
+            $playerButton.addClass("btn-danger");
+          }
         } else {
-          $player.addClass("btn-danger");
+          if (player.team == 'A') {
+            $playerButton.addClass("btn-danger");
+          } else {
+            $playerButton.addClass("btn-primary");
+          }
         }
-        playersElement.append($player);
+        $player.children("img").remove();
         cards = player.cards;
         for (var j = 0; j < cards.length; j++) {
-          playersElement
-            .append(
-              $("<img src='{{ STATIC_URL }}"+cards[j].image+"' class="+cards[j].card+">"));
+          $player.append($("<img src='{{ STATIC_URL }}"+cards[j].image+"'>"));
         }
       }
     });
@@ -150,7 +156,7 @@
       $("#play").children("img").each(function() {
         a.push($(this).attr("class"));
       });
-      $.post("{% url 'main.views.play' id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
+      $.post("{% url 'main.views.play' game.id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
         if (data) {
           alert(data);
         } else {
@@ -176,5 +182,8 @@
   </div>
 </div>
 <div id="players" class="col-md-4">
+{% for player in game.gameplayer_set.all %}
+<div id={{ player }}><button class="btn {% if player.ready %}btn-success{% else %}btn-danger{% endif %}">{{ player }}</button></div>
+{% endfor %}
 </div>
 {% endblock %}

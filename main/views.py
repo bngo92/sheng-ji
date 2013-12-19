@@ -45,7 +45,8 @@ def home(request):
 
 @login_required(login_url=home)
 def game(request, game_id):
-    return render(request, "game.html", {'id': game_id})
+    game = Game.objects.get(id=game_id)
+    return render(request, "game.html", {'game': game})
 
 
 def logout(request):
@@ -85,6 +86,7 @@ def status(request, game_id):
         },
         'players': [{'name': player.__unicode__(),
                      'ready': player.ready,
+                     'team': player.team,
                      'points': player.points,
                      'cards': [card.repr()
                                for card in sorted(Hand.fromstr(player.get_play().cards).cards)]
