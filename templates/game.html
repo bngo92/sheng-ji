@@ -31,7 +31,6 @@
       $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
       $("#trump-rank").text("Trump Rank: "+data.status.trump_rank);
       $("#turn").text("Turn: "+data.status.turn);
-      $("#points").text("Points: "+data.status.points);
 
       if (data.reserve) {
         var reserve = $("#reserve");
@@ -100,7 +99,7 @@
       playersElement.empty();
       for (i = 0; i < players.length; i++) {
         var player = players[i];
-        playersElement.append($("<h5>"+player.name+"</h5>"));
+        playersElement.append($("<h5>"+player.name+" ("+player.points+")</h5>"));
         cards = player.cards;
         for (var j = 0; j < cards.length; j++) {
           playersElement
@@ -147,7 +146,6 @@
   <span id="trump-suit"></span>
   <span id="trump-rank"></span>
   <span id="turn"></span>
-  <span id="points"></span>
 </div>
 <div class="col-md-8">
   <h4>Hand</h4>
