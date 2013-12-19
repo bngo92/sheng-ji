@@ -5,10 +5,6 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
-import os
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "game.settings")
-
 from django.test import TestCase
 from main.models import *
 
@@ -32,9 +28,9 @@ class CardTest(TestCase):
 
 class PlayTest(TestCase):
     def assert_combination(self, combination, n, consecutive, rank):
-        self.assertTrue(combination['n'] == n)
-        self.assertTrue(combination['consecutive'] == consecutive)
-        self.assertTrue(combination['rank'] == rank)
+        self.assertEqual(combination['n'], n)
+        self.assertEqual(combination['consecutive'], consecutive)
+        self.assertEqual(combination['rank'], rank)
 
     def test_init(self):
         trump_suit = CLUBS
@@ -171,6 +167,11 @@ class PlayTest(TestCase):
 
 
 class GameTest(TestCase):
+    def assert_combination(self, combination, n, consecutive, rank):
+        self.assertEqual(combination['n'], n)
+        self.assertEqual(combination['consecutive'], consecutive)
+        self.assertEqual(combination['rank'], rank)
+
     def test_game(self):
         players = [Player.create_player(s, s) for s in ('a', 'b', 'c', 'd')]
         game = Game.setup(players)
@@ -197,3 +198,62 @@ class GameTest(TestCase):
         self.assertIsNone(game.reserve(player, player.get_hand().cards[:8]))
         self.assertTrue(len(Hand.fromstr(player.hand)) == game.hand_size())
         self.assertTrue(len(Hand.fromstr(game.kitty)) == game.reserve_size())
+
+    def test_play(self):
+        players = [Player.create_player(s, s) for s in ('a', 'b', 'c', 'd')]
+        game = Game.setup(players)
+        game.trump_rank = SEVEN
+        players = game.gameplayer_set.all()
+        player = players[0]
+
+        hand = Hand.fromstr("C7")
+        self.assertFalse(game.set_trump_suit(player, hand.cards))
+
+        game.stage = Game.DEAL
+        game.save()
+        self.assertFalse(game.set_trump_suit(player, hand.cards))
+
+        player.hand = str(hand)
+        player.save()
+        self.assertIsNone(game.set_trump_suit(player, hand.cards))
+
+        self.assertEqual(game.trump_suit, CLUBS)
+
+        hands = [Hand.fromstr(s) for s in ("D13,D12", "D13,D2")]
+        player0 = players[0]
+        player0.hand = str(hands[0])
+        player0.save()
+        player1 = players[1]
+        player1.hand = str(hands[1])
+        player1.save()
+        self.assertFalse(game.play(player0, hands[0].cards))
+
+        game.stage = Game.PLAY
+        game.save()
+        self.assertIsNone(game.play(player0, hands[0].cards))
+        self.assertEqual(player0.hand, "D13")
+        play = Play.decode(player0.play)
+        self.assertEqual(len(play.combinations), 1)
+        self.assertEqual(play.suit, DIAMONDS)
+        self.assert_combination(play.combinations[0], 1, 1, QUEEN)
+        self.assertEqual(play.cards, "D12")
+
+        lead_play = Play.decode(game.gameplayer_set.all()[game.lead].play)
+        self.assertEqual(lead_play.suit, DIAMONDS)
+        self.assertEqual(lead_play.rank, QUEEN)
+
+        self.assertTrue(game.play(player1, hands[1].cards))
+        self.assertEqual(game.lead, 0)
+
+        self.assertIsNone(game.play(player1, hands[1].cards[:1]))
+        self.assertEqual(player1.hand, "D2")
+        play = Play.decode(player1.play)
+        self.assertEqual(len(play.combinations), 1)
+        self.assertEqual(play.suit, DIAMONDS)
+        self.assert_combination(play.combinations[0], 1, 1, KING)
+        self.assertEqual(play.cards, "D13")
+        self.assertEqual(game.lead, 1)
+
+        lead_play = Play.decode(game.gameplayer_set.all()[game.lead].play)
+        self.assertEqual(lead_play.suit, DIAMONDS)
+        self.assertEqual(lead_play.rank, KING)

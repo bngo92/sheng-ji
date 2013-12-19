@@ -187,6 +187,7 @@ class Play(object):
     def __init__(self, cards=None, trump_suit=None, trump_rank=None, consecutive=True):
         self.cards = []
         self.suit = None
+        self.rank = None
         self.combinations = None
         if cards is not None:
             self.init(cards, trump_suit, trump_rank, consecutive)
@@ -194,6 +195,7 @@ class Play(object):
     def init(self, cards, trump_suit, trump_rank, consecutive=True):
         self.cards = str(Hand(cards))
         self.suit = cards[0].get_suit(trump_suit, trump_rank)
+        self.rank = max(card.get_rank(trump_suit, trump_rank) for card in cards)
         self.combinations = []
         ranks = Counter(card for card in cards)
 
@@ -224,13 +226,14 @@ class Play(object):
             self.combinations.append({'n': v, 'consecutive': 1, 'rank': k.get_rank(trump_suit, trump_rank)})
 
     def encode(self):
-        return json.dumps({'suit': self.suit, 'combinations': self.combinations, 'cards': self.cards})
+        return json.dumps({'suit': self.suit, 'rank': self.rank, 'combinations': self.combinations, 'cards': self.cards})
 
     @classmethod
     def decode(cls, s):
         play_dict = json.loads(s)
         play = cls()
         play.suit = play_dict['suit']
+        play.rank = play_dict['rank']
         play.combinations = play_dict['combinations']
         play.cards = play_dict['cards']
         return play
@@ -433,29 +436,34 @@ class Game(models.Model):
         if cards not in player_hand:
             return False
 
-        play = Hand(cards)
-        player_hand.play_cards(play.cards)
         if self.trick_turn == 0:
             for other in self.gameplayer_set.all():
                 other.play = ''
                 other.save()
 
             # First player has to play a single suit
-            suit = play.single_suit(self.trump_suit, self.trump_rank)
-            if suit is None or (suit == TRUMP and not self.trump_broken):
+            cards_played = Hand(cards)
+            suit = cards_played.single_suit(self.trump_suit, self.trump_rank)
+            if suit is None:
                 return "Cards have to be a single suit"
+            if suit == TRUMP and not self.trump_broken:
+                if set(cards.get_suit(self.trump_suit, self.trump_rank)) != set(TRUMP):
+                    return "Trump hasn't been broken yet"
+                else:
+                    self.trump_broken = True
 
             # If combination is played, remove cards that aren't highest
-            play = Play(play.cards, self.trump_suit, self.trump_rank)
+            play = Play(cards_played.cards, self.trump_suit, self.trump_rank)
             if len(play.combinations) > 1:
-                not_highest = []
                 for other in self.gameplayer_set.all():
                     if player == other:
                         continue
 
-                    other_hand = [card for card in self.cards if card.suit == suit]
+                    other_hand = [card for card in Hand.fromstr(other.hand).cards
+                                  if card.get_suit(self.trump_suit, self.trump_rank) == suit]
                     other_play = Play(other_hand, self.trump_suit, self.trump_rank, False)
 
+                    not_highest = []
                     for combination in play.combinations:
                         if combination['consecutive'] >= 2:
                             continue
@@ -465,25 +473,36 @@ class Game(models.Model):
                                     combination['rank'] < other_combination['rank']):
                                 not_highest.append(combination)
 
-                if not_highest:
-                    playable_combinations = [combination for combination in play.combinations
-                                             if combination['consecutive'] >= 2]
-                    playable_combinations.append(min(not_highest, key=lambda c: c['rank']))
-                    play.combinations = playable_combinations
+                    if not_highest:
+                        cards = Hand()
+                        for combination in play.combinations:
+                            if combination['consecutive'] < 2:
+                                continue
+
+                            for rank in range(combination['rank'], combination['rank'] - combination['consecutive'], -1):
+                                cards.add_cards(Card(play.suit, rank) for _ in range(combination['n']))
+
+                        lowest = min(not_highest, key=lambda c: c['rank'])
+                        cards.add_cards(Card(play.suit, lowest['rank']) for _ in range(lowest['n']))
+                        cards = cards.cards
+                        break
 
         else:
             # Other players have to play the suit that the first person played
-            suit = play.single_suit(self.trump_suit, self.trump_rank)
+            cards_played = Hand(cards)
+            suit = cards_played.single_suit(self.trump_suit, self.trump_rank)
             if not suit:
                 if player_hand.has_suit(suit, self.trump_suit, self.trump_rank):
                     return "Play leading suit"
+                if suit == TRUMP:
+                    self.trump_broken = True
             else:
-                lead_play = Play.decode(self.gameplayer_set.all()[self.turn].play)
-                play = Play(play.cards, self.trump_suit, self.trump_rank)
-                after_play = Play([card for card in player_hand.cards
-                                   if card.get_suit(self.trump_suit, self.trump_rank) == suit], self.trump_suit, self.trump_rank)
-
+                lead_play = Play.decode(self.gameplayer_set.all()[self.lead].play)
                 lead_rank = max(combination['rank'] for combination in lead_play.combinations)
+                if len(Hand.fromstr(lead_play.cards)) != len(cards):
+                    return "Play same amount of cards"
+
+                play = Play(cards_played.cards, self.trump_suit, self.trump_rank)
                 rank = max(combination['rank'] for combination in play.combinations)
                 valid = True
 
@@ -515,6 +534,8 @@ class Game(models.Model):
                     lead_play.combinations.remove(r)
 
                 # Check cards that the player did not play that they should have
+                after_play = Play([card for card in player_hand.cards
+                                   if card.get_suit(self.trump_suit, self.trump_rank) == suit], self.trump_suit, self.trump_rank)
                 for lead_combination in lead_play.combinations:
                     if lead_combination['consecutive'] >= 2:
                         if any(lead_combination['consecutive'] <= combination['consecutive'] and
@@ -525,11 +546,12 @@ class Game(models.Model):
                     if any(lead_combination['n'] == combination['n'] for combination in after_play.combinations):
                         return "Pairs have to be played"
 
-                if valid and rank > lead_rank:
+                if valid and (suit == TRUMP and self.lead_suit != TRUMP or rank > lead_rank):
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
-            play = Play(cards, self.trump_suit, self.trump_rank).encode()
 
+        player_hand.play_cards(cards)
         player.hand = str(player_hand)
+        play = Play(cards, self.trump_suit, self.trump_rank).encode()
         player.play = play.encode()
         player.save()
 
