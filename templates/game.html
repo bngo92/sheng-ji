@@ -3,6 +3,14 @@
 {% block content %}
 <script>
   $(document).ready(function() {
+    setInterval(function() {
+      var title = document.title;
+      if (window.turn) {
+        document.title = (title == "80 Points" ? "Your Turn!" : "80 Points");
+      } else {
+        document.title = "80 Points";
+      }
+    }, 1000);
     $("#refresh-btn").click(function() {
       load(true);
     });
@@ -53,6 +61,7 @@
       if (data.stage == 4) {
         var play_btn = $("#play-btn");
         if (data.turn) {
+          window.turn = true;
           play_btn.removeAttr("disabled", "disabled");
           play_btn.off("click");
           play_btn.click(function() {
@@ -69,6 +78,7 @@
             });
           });
         } else {
+          window.turn = false;
           play_btn.attr("disabled", "disabled");
           play_btn.off("click");
         }
