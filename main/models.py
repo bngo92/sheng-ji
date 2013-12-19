@@ -316,17 +316,12 @@ class Game(models.Model):
         game.deck = ','.join(map(str, deck))
         game.kitty = ''
 
-        def create_first_player(player, turn):
-            game.trump_rank = player.rank
-            GamePlayer.objects.create(game=game, player=player, team=DECLARERS, turn=turn)
-
-        def create_rest_player(player, turn):
-            GamePlayer.objects.create(game=game, player=player, turn=turn)
-
-        create_player = create_first_player
         for turn, player in enumerate(players):
-            create_player(player, turn)
-            create_player = create_rest_player
+            if turn % 2:
+                team = DECLARERS
+            else:
+                team = OPPONENTS
+            GamePlayer.objects.create(game=game, player=player, team=team, turn=turn)
 
         game.save()
         return game
