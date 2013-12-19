@@ -257,3 +257,4 @@ class GameTest(TestCase):
         lead_play = Play.decode(game.gameplayer_set.all()[game.lead].play)
         self.assertEqual(lead_play.suit, DIAMONDS)
         self.assertEqual(lead_play.rank, KING)
+        self.assertEqual(game.trick_points, 10)

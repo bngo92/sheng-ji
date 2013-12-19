@@ -489,6 +489,11 @@ class Game(models.Model):
                         break
 
         else:
+            # Other players have to play the same number of cards that the first person played
+            lead_play = Play.decode(self.gameplayer_set.all()[self.lead].play)
+            if len(Hand.fromstr(lead_play.cards)) != len(cards):
+                return "Play same amount of cards"
+
             # Other players have to play the suit that the first person played
             cards_played = Hand(cards)
             suit = cards_played.single_suit(self.trump_suit, self.trump_rank)
@@ -498,11 +503,7 @@ class Game(models.Model):
                 if suit == TRUMP:
                     self.trump_broken = True
             else:
-                lead_play = Play.decode(self.gameplayer_set.all()[self.lead].play)
                 lead_rank = max(combination['rank'] for combination in lead_play.combinations)
-                if len(Hand.fromstr(lead_play.cards)) != len(cards):
-                    return "Play same amount of cards"
-
                 play = Play(cards_played.cards, self.trump_suit, self.trump_rank)
                 rank = max(combination['rank'] for combination in play.combinations)
                 valid = True
