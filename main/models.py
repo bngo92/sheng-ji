@@ -188,15 +188,14 @@ class Play(object):
         self.cards = []
         self.suit = None
         self.rank = None
-        self.combinations = None
-        if cards is not None:
+        self.combinations = []
+        if not cards:
             self.init(cards, trump_suit, trump_rank, consecutive)
 
     def init(self, cards, trump_suit, trump_rank, consecutive=True):
         self.cards = str(Hand(cards))
         self.suit = cards[0].get_suit(trump_suit, trump_rank)
         self.rank = max(card.get_rank(trump_suit, trump_rank) for card in cards)
-        self.combinations = []
         ranks = Counter(card for card in cards)
 
         if consecutive:
