@@ -81,7 +81,7 @@ def status(request, game_id):
             'cards': [card.repr() for card in sorted(player.get_hand().cards)],
             'new_cards': new_cards,
         },
-        'players': [{'name': player.__unicode__(), 'cards': player.get_play().cards} for player in players]
+        'players': [{'name': player.__unicode__(), 'cards': player.get_play().cards if player.play else []} for player in players]
     }), content_type='application/json')
 
 
