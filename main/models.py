@@ -189,7 +189,7 @@ class Play(object):
         self.suit = None
         self.rank = None
         self.combinations = []
-        if not cards:
+        if cards:
             self.init(cards, trump_suit, trump_rank, consecutive)
 
     def init(self, cards, trump_suit, trump_rank, consecutive=True):
