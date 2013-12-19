@@ -497,7 +497,9 @@ class Game(models.Model):
             # Other players have to play the suit that the first person played
             cards_played = Hand(cards)
             suit = cards_played.single_suit(self.trump_suit, self.trump_rank)
-            if (not suit or suit != lead_play.suit) and player_hand.has_suit(suit, self.trump_suit, self.trump_rank):
+            after = Hand(player_hand.cards)
+            after.play_cards(cards)
+            if (not suit or suit != lead_play.suit) and after.has_suit(suit, self.trump_suit, self.trump_rank):
                 return "Play leading suit"
             elif suit in (lead_play.suit, TRUMP):
                 if suit == TRUMP:
@@ -534,7 +536,7 @@ class Game(models.Model):
                     lead_play.combinations.remove(r)
 
                 # Check cards that the player did not play that they should have
-                after_play = Play([card for card in player_hand.cards
+                after_play = Play([card for card in after.cards
                                    if card.get_suit(self.trump_suit, self.trump_rank) == suit], self.trump_suit, self.trump_rank)
                 for lead_combination in lead_play.combinations:
                     if lead_combination['consecutive'] >= 2:
