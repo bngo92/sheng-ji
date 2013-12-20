@@ -91,6 +91,7 @@ def status(request, game_id):
                      'cards': [card.repr()
                                for card in sorted(Hand.fromstr(player.get_play().cards).cards)]
         if player.play else []} for player in players],
+        'winner': 'Red' if game.winner == DECLARERS else 'Blue',
     }), content_type='application/json')
 
 

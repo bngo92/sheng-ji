@@ -257,11 +257,12 @@ class Game(models.Model):
     turn = models.IntegerField(default=0)
     trick_turn = models.IntegerField(default=0)
     trick_points = models.IntegerField(default=0)
+    lead = models.IntegerField(default=0)
+    winner = models.CharField(max_length=1, choices=TEAM_CHOICES, default=DECLARERS)
 
     # Cards
     deck = models.CharField(max_length=1000)
     kitty = models.CharField(max_length=100)
-    lead = models.IntegerField(default=0)
 
     # Trump details
     trump_rank = models.IntegerField(choices=RANK_CHOICES)
@@ -568,6 +569,10 @@ class Game(models.Model):
 
             if len(player_hand) == 0:
                 self.stage = Game.SCORE
+                opponent_points = sum(player.points for player in self.gameplayer_set.filter(team=OPPONENTS))
+                if opponent_points > 80:
+                    self.winner = OPPONENTS
+                    self.save()
 
         self.save()
 
