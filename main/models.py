@@ -543,7 +543,7 @@ class Game(models.Model):
                         return "Pairs have to be played"
 
                 lead_play = Play.decode(self.gameplayer_set.all()[self.lead].play)
-                if valid and (suit == TRUMP and first_play.suit != TRUMP or play.rank > lead_play.rank):
+                if valid and (suit == TRUMP and lead_play.suit != TRUMP or play.rank > lead_play.rank):
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
         player_hand.play_cards(cards)
