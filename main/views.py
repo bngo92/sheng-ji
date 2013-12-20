@@ -94,6 +94,7 @@ def status(request, game_id):
                                for card in sorted(Hand.fromstr(player.get_play().cards).cards)]
         if player.play else []} for player in players],
         'winner': 'Red' if game.winner == DECLARERS else 'Blue',
+        'points': sum(player.points for player in players),
     }), content_type='application/json')
 
 

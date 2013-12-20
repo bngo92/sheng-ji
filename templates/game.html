@@ -41,7 +41,7 @@
       $("#turn").text("Turn: "+data.status.turn);
 
       if (data.stage == 5) {
-        $("#turn").text("Winner: "+data.winner)
+        $("#turn").text("Winner: "+data.winner+" ("+data.points+")");
       }
 
       if (data.reserve) {
