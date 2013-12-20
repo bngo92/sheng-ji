@@ -484,8 +484,8 @@ class Game(models.Model):
 
         else:
             # Other players have to play the same number of cards that the first person played
-            lead_play = Play.decode(self.gameplayer_set.all()[self.turn].play)
-            if len(Hand.fromstr(lead_play.cards)) != len(cards):
+            first_play = Play.decode(self.gameplayer_set.all()[self.turn].play)
+            if len(Hand.fromstr(first_play.cards)) != len(cards):
                 return "Play same amount of cards"
 
             # Other players have to play the suit that the first person played
@@ -493,9 +493,9 @@ class Game(models.Model):
             suit = cards_played.single_suit(self.trump_suit, self.trump_rank)
             after = Hand(player_hand.cards)
             after.play_cards(cards)
-            if (not suit or suit != lead_play.suit) and after.has_suit(lead_play.suit, self.trump_suit, self.trump_rank):
+            if (not suit or suit != first_play.suit) and after.has_suit(first_play.suit, self.trump_suit, self.trump_rank):
                 return "Play leading suit"
-            elif suit in (lead_play.suit, TRUMP):
+            elif suit in (first_play.suit, TRUMP):
                 if suit == TRUMP:
                     self.trump_broken = True
 
@@ -504,7 +504,7 @@ class Game(models.Model):
 
                 # Check which combinations are matched
                 remove_lead = []
-                for lead_combination in lead_play.combinations:
+                for lead_combination in first_play.combinations:
                     if lead_combination['consecutive'] >= 2:
                         remove = []
                         for combination in play.combinations:
@@ -527,12 +527,12 @@ class Game(models.Model):
                             valid = False
 
                 for r in remove_lead:
-                    lead_play.combinations.remove(r)
+                    first_play.combinations.remove(r)
 
                 # Check cards that the player did not play that they should have
                 after_play = Play([card for card in after.cards
                                    if card.get_suit(self.trump_suit, self.trump_rank) == suit], self.trump_suit, self.trump_rank)
-                for lead_combination in lead_play.combinations:
+                for lead_combination in first_play.combinations:
                     if lead_combination['consecutive'] >= 2:
                         if any(lead_combination['consecutive'] <= combination['consecutive'] and
                                lead_combination['n'] == combination['n']
@@ -542,7 +542,8 @@ class Game(models.Model):
                     if any(lead_combination['n'] == combination['n'] for combination in after_play.combinations):
                         return "Pairs have to be played"
 
-                if valid and (suit == TRUMP and lead_play.suit != TRUMP or play.rank > lead_play.rank):
+                lead_play = Play.decode(self.gameplayer_set.all()[self.lead].play)
+                if valid and (suit == TRUMP and first_play.suit != TRUMP or play.rank > lead_play.rank):
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
         player_hand.play_cards(cards)
