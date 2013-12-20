@@ -40,7 +40,7 @@
       $("#trump-rank").text("Trump Rank: "+data.status.trump_rank);
       $("#turn").text("Turn: "+data.status.turn);
 
-      if (data.turn == 5) {
+      if (data.stage == 5) {
         $("#turn").text("Winner: "+data.winner)
       }
 
