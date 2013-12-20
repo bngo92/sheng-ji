@@ -570,9 +570,33 @@ class Game(models.Model):
             if len(player_hand) == 0:
                 self.stage = Game.SCORE
                 opponent_points = sum(player.points for player in self.gameplayer_set.filter(team=OPPONENTS))
-                if opponent_points > 80:
+                if opponent_points >= 80:
+                    players = self.gameplayer_set.filter(team=OPPONENTS)
+                    if opponent_points >= 160:
+                        delta = 3
+                    elif opponent_points >= 120:
+                        delta = 2
+                    else:
+                        delta = 1
+                    for player in players:
+                        player.player.add_rank(delta)
+                    for player in self.gameplayer_set.filter(team=DECLARERS):
+                        player.plus = False
+                        player.save()
                     self.winner = OPPONENTS
-                    self.save()
+                else:
+                    players = self.gameplayer_set.filter(team=DECLARERS)
+                    if opponent_points >= 40:
+                        delta = 1
+                    elif opponent_points >= 0:
+                        delta = 2
+                    else:
+                        delta = 3
+                    for player in players:
+                        player.player.add_rank(delta)
+                    for player in self.gameplayer_set.filter(team=OPPONENTS):
+                        player.plus = False
+                        player.save()
 
         self.save()
 
@@ -580,6 +604,7 @@ class Game(models.Model):
 class Player(models.Model):
     user = models.ForeignKey(User)
     rank = models.IntegerField(choices=RANK_CHOICES, default=TWO)
+    plus = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.user.__unicode__()
@@ -593,6 +618,13 @@ class Player(models.Model):
             return player
         except IntegrityError:
             return None
+
+    def add_rank(self, delta):
+        if not self.plus:
+            self.plus = True
+            delta -= 1
+        self.rank += delta
+        self.save()
 
 
 class GamePlayer(models.Model):
