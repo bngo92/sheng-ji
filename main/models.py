@@ -607,7 +607,7 @@ class Player(models.Model):
     plus = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return self.user.__unicode__()
+        return '{}[{}{}]'.format(self.user.__unicode__(), self.rank, '+' if self.plus else '-')
 
     @classmethod
     def create_player(cls, username, password):
