@@ -571,6 +571,13 @@ class Game(models.Model):
 
             if len(player_hand) == 0:
                 self.stage = Game.SCORE
+                lead = self.gameplayer_set.all()[self.lead]
+                if lead.team == OPPONENTS:
+                    cards = Hand.fromstr(self.kitty).cards
+                    lead.points += 2 * (5 * len([card for card in cards if card.rank == FIVE]) +
+                                        10 * len([card for card in cards if card.rank == TEN or card.rank == KING]))
+                    lead.save()
+
                 opponent_points = sum(player.points for player in self.gameplayer_set.filter(team=OPPONENTS))
                 if opponent_points >= 80:
                     players = self.gameplayer_set.filter(team=OPPONENTS)
