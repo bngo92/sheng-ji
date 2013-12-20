@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <div class="col-md-8">
+  <a href="{% url 'new_game' %}"><button class="btn btn-primary">New game</button></a>
   <h4>Games</h4>
   {% for game in games %}
     <h4>Game #{{ game.id }}</h4>
@@ -9,5 +11,9 @@
       <p class="text-success">Your turn</p>
     {% endif %}
   {% endfor %}
-  <a href="{% url 'new_game' %}"><button class="btn btn-primary">New game</button></a>
+  </div>
+  <div class="col-md-4">
+  {% for player in players %}
+    player.get_rank()
+  {% endfor %}
 {% endblock %}

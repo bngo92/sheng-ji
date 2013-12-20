@@ -29,14 +29,16 @@ def send_message(func):
 def home(request):
     if request.user.is_authenticated():
         return render(request, "home.html",
-                      {'games': Game.objects.filter(gameplayer__player__user=request.user)})
+                      {'games': Game.objects.filter(gameplayer__player__user=request.user),
+                       'players': Player.objects.order_by('rank')})
 
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
             auth.login(request, form.cleaned_data['user'])
             return render(request, "home.html",
-                          {'games': Game.objects.filter(gameplayer__player__user=request.user)})
+                          {'games': Game.objects.filter(gameplayer__player__user=request.user),
+                           'players': Player.objects.order_by('rank')})
     else:
         form = LoginForm()
 
