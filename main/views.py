@@ -30,7 +30,7 @@ def home(request):
     if request.user.is_authenticated():
         return render(request, "home.html",
                       {'games': Game.objects.filter(gameplayer__player__user=request.user).order_by('-id'),
-                       'players': Player.objects.order_by('-rank')})
+                       'players': Player.objects.order_by('-rank', 'plus')})
 
     if request.method == "POST":
         form = LoginForm(request.POST)
@@ -38,7 +38,7 @@ def home(request):
             auth.login(request, form.cleaned_data['user'])
             return render(request, "home.html",
                           {'games': Game.objects.filter(gameplayer__player__user=request.user).order_by('-id'),
-                           'players': Player.objects.order_by('-rank')})
+                           'players': Player.objects.order_by('-rank', 'plus')})
     else:
         form = LoginForm()
 
