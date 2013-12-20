@@ -544,7 +544,8 @@ class Game(models.Model):
                         return "Pairs have to be played"
 
                 lead_play = Play.decode(self.gameplayer_set.all()[self.lead].play)
-                if valid and ((suit == TRUMP and lead_play.suit != TRUMP) or play.rank > lead_play.rank):
+                if valid and ((suit == TRUMP and lead_play.suit != TRUMP) or
+                              (suit == lead_play.suit and play.rank > lead_play.rank)):
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
         player_hand.play_cards(cards)
@@ -607,6 +608,9 @@ class Player(models.Model):
     plus = models.BooleanField(default=False)
 
     def __unicode__(self):
+        return self.user.__unicode__()
+
+    def get_rank(self):
         return '{}[{}{}]'.format(self.user.__unicode__(), self.rank, '+' if self.plus else '-')
 
     @classmethod
