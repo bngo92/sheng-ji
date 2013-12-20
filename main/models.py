@@ -318,7 +318,7 @@ class Game(models.Model):
         game.kitty = ''
 
         for turn, player in enumerate(players):
-            if turn % 2:
+            if turn % 2 == 0:
                 team = DECLARERS
             else:
                 team = OPPONENTS
