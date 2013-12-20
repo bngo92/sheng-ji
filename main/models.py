@@ -590,8 +590,8 @@ class Game(models.Model):
                     for player in players:
                         player.player.add_rank(delta)
                     for player in self.gameplayer_set.filter(team=DECLARERS):
-                        player.plus = False
-                        player.save()
+                        player.player.plus = False
+                        player.player.save()
                     self.winner = OPPONENTS
                 else:
                     players = self.gameplayer_set.filter(team=DECLARERS)
@@ -604,8 +604,8 @@ class Game(models.Model):
                     for player in players:
                         player.player.add_rank(delta)
                     for player in self.gameplayer_set.filter(team=OPPONENTS):
-                        player.plus = False
-                        player.save()
+                        player.player.plus = False
+                        player.player.save()
 
         self.save()
 
