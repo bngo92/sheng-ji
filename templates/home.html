@@ -2,19 +2,25 @@
 
 {% block content %}
   <div class="col-md-8">
-  <a href="{% url 'new_game' %}"><button class="btn btn-primary">New game</button></a>
-  <h4>Games</h4>
-  {% for game in games %}
-    <h4>Game #{{ game.id }}</h4>
-    <a href="{% url 'game' game.id %}">Game #{{ game.id }}</a>
-    {% if game.your_turn %}
-      <p class="text-success">Your turn</p>
-    {% endif %}
-  {% endfor %}
+    <h4>Games</h4>
+    <a href="{% url 'new_game' %}"><button class="btn btn-primary">New game</button></a>
+    {% for game in games %}
+      <h4>Game #{{ game.id }}</h4>
+      <a href="{% url 'game' game.id %}">Game #{{ game.id }}</a>
+      {% if game.your_turn %}
+        <p class="text-success">Your turn</p>
+      {% endif %}
+    {% endfor %}
   </div>
   <div class="col-md-4">
-  {% for player in players %}
-    {{ player.get_rank }}
-  {% endfor %}
+    <h4>Leaderboard</h4>
+    <table class="table">
+      {% for player in players %}
+        <tr>
+          <td>{{ player }}</td>
+          <td>{{ player.get_rank }}</td>
+        </tr>
+      {% endfor %}
+    </table>
   </div>
 {% endblock %}

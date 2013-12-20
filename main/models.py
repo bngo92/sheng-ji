@@ -611,7 +611,7 @@ class Player(models.Model):
         return self.user.__unicode__()
 
     def get_rank(self):
-        return '{}[{}{}]'.format(self.user.__unicode__(), self.rank, '+' if self.plus else '-')
+        return '{}{}'.format(self.rank, '+' if self.plus else '-')
 
     @classmethod
     def create_player(cls, username, password):
