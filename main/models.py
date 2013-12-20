@@ -304,6 +304,7 @@ class Game(models.Model):
 
     @classmethod
     def setup(cls, players):
+        random.shuffle(players)
         game = cls()
         game.trump_rank = players[0].rank
         game.save()
