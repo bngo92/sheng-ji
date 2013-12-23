@@ -91,7 +91,7 @@ def status(request, game_id):
                      'team': player.team,
                      'points': player.points,
                      'cards': [card.repr()
-                               for card in sorted(Hand.fromstr(player.get_play().cards).cards)]
+                               for card in sorted(Cards.fromstr(player.get_play().cards).cards)]
         if player.play else []} for player in players],
         'winner': 'Red' if game.winner == DECLARERS else 'Blue',
         'points': sum(player.points for player in game.gameplayer_set.filter(team=OPPONENTS)),
@@ -128,7 +128,7 @@ def play(request, game_id):
     game = Game.objects.get(id=game_id)
     player = game.gameplayer_set.get(player__user=request.user)
     if request.method == "POST":
-        cards = Hand.fromstr(request.POST['data']).cards
+        cards = Cards.fromstr(request.POST['data']).cards
         if not cards:
             return "No cards were played"
         if game.stage == Game.DEAL:
