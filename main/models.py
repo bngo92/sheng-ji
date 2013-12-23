@@ -113,8 +113,7 @@ def is_consecutive(cards, trump_suit, trump_rank):
     if len(cards) < 2:
         return False
 
-    ranks = [RANKS.index(card.get_rank(trump_suit, trump_rank)) for card in cards]
-    trump_rank = RANKS.index(trump_rank)
+    ranks = [card.get_rank(trump_suit, trump_rank) for card in cards]
     min_rank = min(ranks)
     max_rank = max(ranks)
     return (sorted(ranks + [trump_rank]) == range(min_rank, max_rank + 1) if min_rank < trump_rank < max_rank else
