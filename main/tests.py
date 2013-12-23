@@ -38,7 +38,7 @@ class PlayTest(TestCase):
 
         s = "H5,H5,H4,H4"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == HEARTS)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 1)
@@ -46,7 +46,7 @@ class PlayTest(TestCase):
 
         s = "S11,S11,S10,S10,S9,S9,S8,S8"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == SPADES)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 1)
@@ -54,7 +54,7 @@ class PlayTest(TestCase):
 
         s = "C5,C5,C4,C4,C3,C3"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == TRUMP)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 1)
@@ -62,7 +62,7 @@ class PlayTest(TestCase):
 
         s = "D8,D8,D6,D6"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == DIAMONDS)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 1)
@@ -70,7 +70,7 @@ class PlayTest(TestCase):
 
         s = "C7,C7,D7,D7,C14,C14"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == TRUMP)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 1)
@@ -78,7 +78,7 @@ class PlayTest(TestCase):
 
         s = "J18,J18,J17,J17,C7,C7"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == TRUMP)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 1)
@@ -86,7 +86,7 @@ class PlayTest(TestCase):
 
         s = "H10,H10,H8,H8"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == HEARTS)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 2)
@@ -103,7 +103,7 @@ class PlayTest(TestCase):
 
         s = "C7,C7,C6,C6"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == TRUMP)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 2)
@@ -112,7 +112,7 @@ class PlayTest(TestCase):
 
         s = "S7,S7,D7,D7"
         cards = Hand.fromstr(s).cards
-        play = Play(cards, trump_suit, trump_rank)
+        play = Combinations(cards, trump_suit, trump_rank)
         self.assertTrue(play.suit == TRUMP)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 2)
@@ -125,7 +125,7 @@ class PlayTest(TestCase):
 
         # pair of offsuit trump
         cards = Hand.fromstr("S2,D2").cards
-        play = Play(cards, HEARTS, TWO)
+        play = Combinations(cards, HEARTS, TWO)
         self.assertTrue(play.suit == TRUMP)
         self.assertTrue(len(play.combinations) == 2)
 
@@ -139,7 +139,7 @@ class PlayTest(TestCase):
 
         # tractor
         cards = Hand.fromstr("S2,S2,S3,S3").cards
-        play = Play(cards, HEARTS, FOUR)
+        play = Combinations(cards, HEARTS, FOUR)
         self.assertTrue(play.suit == SPADES)
         self.assertTrue(len(play.combinations) == 1)
 
@@ -150,7 +150,7 @@ class PlayTest(TestCase):
 
         # combination
         cards = Hand.fromstr("S2,S3").cards
-        play = Play(cards, HEARTS, FOUR)
+        play = Combinations(cards, HEARTS, FOUR)
         self.assertTrue(play.suit == SPADES)
         self.assertTrue(len(play.combinations) == 2)
 
@@ -232,13 +232,13 @@ class GameTest(TestCase):
         game.save()
         self.assertIsNone(game.play(player0, hands[0].cards))
         self.assertEqual(player0.hand, "D13")
-        play = Play.decode(player0.play)
+        play = Combinations.decode(player0.play)
         self.assertEqual(len(play.combinations), 1)
         self.assertEqual(play.suit, DIAMONDS)
         self.assert_combination(play.combinations[0], 1, 1, QUEEN)
         self.assertEqual(play.cards, "D12")
 
-        lead_play = Play.decode(game.gameplayer_set.all()[game.lead].play)
+        lead_play = Combinations.decode(game.gameplayer_set.all()[game.lead].play)
         self.assertEqual(lead_play.suit, DIAMONDS)
         self.assertEqual(lead_play.rank, QUEEN)
 
@@ -247,14 +247,14 @@ class GameTest(TestCase):
 
         self.assertIsNone(game.play(player1, hands[1].cards[:1]))
         self.assertEqual(player1.hand, "D2")
-        play = Play.decode(player1.play)
+        play = Combinations.decode(player1.play)
         self.assertEqual(len(play.combinations), 1)
         self.assertEqual(play.suit, DIAMONDS)
         self.assert_combination(play.combinations[0], 1, 1, KING)
         self.assertEqual(play.cards, "D13")
         self.assertEqual(game.lead, 1)
 
-        lead_play = Play.decode(game.gameplayer_set.all()[game.lead].play)
+        lead_play = Combinations.decode(game.gameplayer_set.all()[game.lead].play)
         self.assertEqual(lead_play.suit, DIAMONDS)
         self.assertEqual(lead_play.rank, KING)
         self.assertEqual(game.trick_points, 10)

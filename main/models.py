@@ -182,7 +182,7 @@ class Hand(object):
         return any(card.get_suit(trump_suit, trump_rank) == suit for card in self.cards)
 
 
-class Play(object):
+class Combinations(object):
     def __init__(self, cards=None, trump_suit=None, trump_rank=None, consecutive=True):
         self.cards = []
         self.suit = None
@@ -378,7 +378,7 @@ class Game(models.Model):
             self.trump_suit = cards[0].suit
             self.save()
 
-            play = Play(cards, self.trump_suit, self.trump_rank)
+            play = Combinations(cards, self.trump_suit, self.trump_rank)
             player.play = play.encode()
             player.save()
         else:
@@ -449,7 +449,7 @@ class Game(models.Model):
                     self.trump_broken = True
 
             # If combination is played, remove cards that aren't highest
-            play = Play(cards_played.cards, self.trump_suit, self.trump_rank)
+            play = Combinations(cards_played.cards, self.trump_suit, self.trump_rank)
             if len(play.combinations) > 1:
                 for other in self.gameplayer_set.all():
                     if player == other:
@@ -457,7 +457,7 @@ class Game(models.Model):
 
                     other_hand = [card for card in Hand.fromstr(other.hand).cards
                                   if card.get_suit(self.trump_suit, self.trump_rank) == suit]
-                    other_play = Play(other_hand, self.trump_suit, self.trump_rank, False)
+                    other_play = Combinations(other_hand, self.trump_suit, self.trump_rank, False)
 
                     not_highest = []
                     for combination in play.combinations:
@@ -485,7 +485,7 @@ class Game(models.Model):
 
         else:
             # Other players have to play the same number of cards that the first person played
-            first_play = Play.decode(self.gameplayer_set.all()[self.turn].play)
+            first_play = Combinations.decode(self.gameplayer_set.all()[self.turn].play)
             if len(Hand.fromstr(first_play.cards)) != len(cards):
                 return "Play same amount of cards"
 
@@ -500,7 +500,7 @@ class Game(models.Model):
                 if suit == TRUMP:
                     self.trump_broken = True
 
-                play = Play(cards_played.cards, self.trump_suit, self.trump_rank)
+                play = Combinations(cards_played.cards, self.trump_suit, self.trump_rank)
                 valid = True
 
                 # Check which combinations are matched
@@ -531,7 +531,7 @@ class Game(models.Model):
                     first_play.combinations.remove(r)
 
                 # Check cards that the player did not play that they should have
-                after_play = Play([card for card in after.cards
+                after_play = Combinations([card for card in after.cards
                                    if card.get_suit(self.trump_suit, self.trump_rank) == suit], self.trump_suit, self.trump_rank)
                 for lead_combination in first_play.combinations:
                     if lead_combination['consecutive'] >= 2:
@@ -543,14 +543,14 @@ class Game(models.Model):
                     if any(lead_combination['n'] == combination['n'] for combination in after_play.combinations):
                         return "Pairs have to be played"
 
-                lead_play = Play.decode(self.gameplayer_set.all()[self.lead].play)
+                lead_play = Combinations.decode(self.gameplayer_set.all()[self.lead].play)
                 if valid and ((suit == TRUMP and lead_play.suit != TRUMP) or
                               (suit == lead_play.suit and play.rank > lead_play.rank)):
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
         player_hand.play_cards(cards)
         player.hand = str(player_hand)
-        play = Play(cards, self.trump_suit, self.trump_rank).encode()
+        play = Combinations(cards, self.trump_suit, self.trump_rank).encode()
         player.play = play.encode()
         player.save()
 
@@ -660,7 +660,7 @@ class GamePlayer(models.Model):
 
     def get_play(self):
         if self.play:
-            return Play.decode(self.play)
+            return Combinations.decode(self.play)
         else:
             return None
 
