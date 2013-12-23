@@ -38,10 +38,11 @@
     $.getJSON("{% url 'main.views.status' game.id %}", function(data) {
       $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
       $("#trump-rank").text("Trump Rank: "+data.status.trump_rank);
-      $("#turn").text("Turn: "+data.status.turn);
 
       if (data.stage == 5) {
         $("#turn").text("Winner: "+data.winner+" ("+data.points+")");
+      } else {
+        $("#turn").text("Turn: "+data.status.turn);
       }
 
       if (data.reserve) {
