@@ -505,12 +505,15 @@ class Game(models.Model):
                     self.trump_broken = True
 
                 can_win = True
-                combinations_before_play = CardCombinations(cards_played.cards,
-                                                            self.trump_suit, self.trump_rank).combinations
+                combinations_before_play = CardCombinations(
+                    [card for card in player_hand.cards
+                     if card.get_suit(self.trump_suit, self.trump_rank) == cards_played_suit],
+                    self.trump_suit, self.trump_rank).combinations
 
                 # Check which combinations are matched with hand
-                for first_player_combination in CardCombinations(first_player_cards,
-                                                                 self.trump_suit, self.trump_rank).combinations:
+                first_player_combinations = CardCombinations(first_player_cards,
+                                                             self.trump_suit, self.trump_rank).combinations
+                for first_player_combination in first_player_combinations:
                     remove = []
                     if first_player_combination['consecutive'] >= 2:
                         match = [combination for combination in combinations_before_play
@@ -545,8 +548,7 @@ class Game(models.Model):
                                                        self.trump_suit, self.trump_rank).combinations
 
                 # Check which combinations are matched with hand
-                for first_player_combination in CardCombinations(first_player_cards,
-                                                                 self.trump_suit, self.trump_rank).combinations:
+                for first_player_combination in first_player_combinations:
                     if 'match' not in first_player_combination:
                         continue
 
@@ -562,15 +564,15 @@ class Game(models.Model):
                                 return "Consecutive pairs have to be played"
 
                         else:
-                            match = [combination for combination in combinations_before_play
+                            match = [combination for combination in combinations_played
                                      if first_player_combination['n'] == combination['n']][:first_player_combination['consecutive']]
-                            if match:
+                            if len(match) >= first_player_combination['match']:
                                 remove.extend(match)
                             else:
                                 return "Pairs have to be played"
 
                     else:
-                        match = [combination for combination in combinations_before_play
+                        match = [combination for combination in combinations_played
                                  if first_player_combination['n'] == combination['n']][:1]
                         if match:
                             first_player_combination['match'] = True
