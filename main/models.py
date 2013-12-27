@@ -182,14 +182,26 @@ class Cards(object):
         return any(card.get_suit(trump_suit, trump_rank) == suit for card in self.cards)
 
 
+@total_ordering
 class CardCombinations(object):
     def __init__(self, cards=None, trump_suit=None, trump_rank=None, consecutive=True):
         self.cards = []
         self.suit = None
         self.rank = None
         self.combinations = []
+        self.can_win = True
         if cards:
             self.init(cards, trump_suit, trump_rank, consecutive)
+
+    def __eq__(self, other):
+        return (self.suit, self.rank) == (other.suit, other.rank)
+
+    def __lt__(self, other):
+        if self.suit != TRUMP and other.suit == TRUMP:
+            return True
+        if self.suit == TRUMP and other.suit != TRUMP:
+            return False
+        return self.rank < other.rank
 
     def init(self, cards, trump_suit, trump_rank, consecutive=True):
         self.cards = str(Cards(cards))
@@ -222,6 +234,74 @@ class CardCombinations(object):
 
         for k, v in ranks.iteritems():
             self.combinations.append({'n': v, 'consecutive': 1, 'rank': k.get_rank(trump_suit, trump_rank)})
+
+    def validate(self, before, after):
+        # Check which combinations are matched with hand
+        for first_player_combination in self.combinations:
+            remove = []
+            if first_player_combination['consecutive'] >= 2:
+                match = [combination for combination in before.combinations
+                         if combination['consecutive'] >= 2 and
+                         first_player_combination['n'] == combination['n']][:1]
+                if match:
+                    first_player_combination['match'] = True
+                    remove.extend(match)
+
+                else:
+                    self.can_win = False
+                    match = [combination for combination in before.combinations
+                             if first_player_combination['n'] == combination['n']][:first_player_combination['consecutive']]
+                    if match:
+                        first_player_combination['match'] = len(match)
+                        remove.extend(match)
+
+            else:
+                match = [combination for combination in before.combinations
+                         if first_player_combination['n'] == combination['n']][:1]
+                if match:
+                    first_player_combination['match'] = True
+                    remove.extend(match)
+                else:
+                    self.can_win = False
+
+            for r in remove:
+                before.combinations.remove(r)
+
+        # Check which combinations are matched with cards played
+        for first_player_combination in self.combinations:
+            if 'match' not in first_player_combination:
+                continue
+
+            remove = []
+            if first_player_combination['consecutive'] >= 2:
+                if first_player_combination['match'] is True:
+                    match = [combination for combination in after.combinations
+                             if combination['consecutive'] >= 2 and
+                             first_player_combination['n'] == combination['n']][:1]
+                    if match:
+                        remove.extend(match)
+                    else:
+                        return "Consecutive pairs have to be played"
+
+                else:
+                    match = [combination for combination in after.combinations
+                             if first_player_combination['n'] == combination['n']][:first_player_combination['consecutive']]
+                    if len(match) >= first_player_combination['match']:
+                        remove.extend(match)
+                    else:
+                        return "Pairs have to be played"
+
+            else:
+                match = [combination for combination in after.combinations
+                         if first_player_combination['n'] == combination['n']][:1]
+                if match:
+                    first_player_combination['match'] = True
+                    remove.extend(match)
+                else:
+                    return "Pairs have to be played"
+
+            for r in remove:
+                after.combinations.remove(r)
 
     def encode(self):
         return json.dumps({'suit': self.suit, 'rank': self.rank, 'combinations': self.combinations, 'cards': self.cards})
@@ -504,88 +584,20 @@ class Game(models.Model):
                 if cards_played_suit == TRUMP:
                     self.trump_broken = True
 
-                can_win = True
+                first_player_combinations = CardCombinations(first_player_cards,
+                                                             self.trump_suit, self.trump_rank)
                 combinations_before_play = CardCombinations(
                     [card for card in player_hand.cards
                      if card.get_suit(self.trump_suit, self.trump_rank) == cards_played_suit],
-                    self.trump_suit, self.trump_rank).combinations
-
-                # Check which combinations are matched with hand
-                first_player_combinations = CardCombinations(first_player_cards,
-                                                             self.trump_suit, self.trump_rank).combinations
-                for first_player_combination in first_player_combinations:
-                    remove = []
-                    if first_player_combination['consecutive'] >= 2:
-                        match = [combination for combination in combinations_before_play
-                                 if combination['consecutive'] >= 2 and
-                                 first_player_combination['n'] == combination['n']][:1]
-                        if match:
-                            first_player_combination['match'] = True
-                            remove.extend(match)
-
-                        else:
-                            can_win = False
-                            match = [combination for combination in combinations_before_play
-                                     if first_player_combination['n'] == combination['n']][:first_player_combination['consecutive']]
-                            if match:
-                                first_player_combination['match'] = len(match)
-                                remove.extend(match)
-
-                    else:
-                        match = [combination for combination in combinations_before_play
-                                 if first_player_combination['n'] == combination['n']][:1]
-                        if match:
-                            first_player_combination['match'] = True
-                            remove.extend(match)
-                        else:
-                            can_win = False
-
-                    for r in remove:
-                        combinations_before_play.remove(r)
-
-                # Check which combinations are matched with cards played
+                    self.trump_suit, self.trump_rank)
                 combinations_played = CardCombinations(cards_played.cards,
-                                                       self.trump_suit, self.trump_rank).combinations
-
-                # Check which combinations are matched with hand
-                for first_player_combination in first_player_combinations:
-                    if 'match' not in first_player_combination:
-                        continue
-
-                    remove = []
-                    if first_player_combination['consecutive'] >= 2:
-                        if first_player_combination['match'] is True:
-                            match = [combination for combination in combinations_played
-                                     if combination['consecutive'] >= 2 and
-                                     first_player_combination['n'] == combination['n']][:1]
-                            if match:
-                                remove.extend(match)
-                            else:
-                                return "Consecutive pairs have to be played"
-
-                        else:
-                            match = [combination for combination in combinations_played
-                                     if first_player_combination['n'] == combination['n']][:first_player_combination['consecutive']]
-                            if len(match) >= first_player_combination['match']:
-                                remove.extend(match)
-                            else:
-                                return "Pairs have to be played"
-
-                    else:
-                        match = [combination for combination in combinations_played
-                                 if first_player_combination['n'] == combination['n']][:1]
-                        if match:
-                            first_player_combination['match'] = True
-                            remove.extend(match)
-                        else:
-                            return "Pairs have to be played"
-
-                    for r in remove:
-                        combinations_played.remove(r)
+                                                       self.trump_suit, self.trump_rank)
+                ret = first_player_combinations.validate(combinations_before_play, combinations_played)
+                if ret:
+                    return ret
 
                 lead_play = CardCombinations.decode(self.gameplayer_set.all()[self.lead].play)
-                if can_win and ((cards_played_suit == TRUMP and lead_play.suit != TRUMP) or
-                                (cards_played_suit == lead_play.suit and CardCombinations(cards).rank > lead_play.rank)):
+                if first_player_combinations.can_win and combinations_played > lead_play:
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
         player_hand.play_cards(cards)
