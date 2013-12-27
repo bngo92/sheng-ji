@@ -48,7 +48,15 @@
       if (data.reserve) {
         var reserve = $("#reserve");
         if (reserve.length == 0) {
-          $("#buttons").append($("<button id='reserve' class='btn btn-success'>Reserve</buton>")
+          var $buttons = $("#buttons");
+          if (data.friend) {
+            var $form = $("<form>");
+            var $select = $("<select>").addClass("form-control");
+            {% for x in range %}
+            {% endfor %}
+            {% for suit in suits %}
+          }
+          $buttons.append($("<button id='reserve' class='btn btn-success'>Reserve</button>")
             .click(function() {
               $.post("{% url 'reserve' game.id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
                 if (data) {
