@@ -577,8 +577,7 @@ class Game(models.Model):
                 return "Play same amount of cards"
 
             # Other players have to play the suit that the first person played
-            cards_played = Cards(cards)
-            cards_played_suit = cards_played.single_suit(self.trump_suit, self.trump_rank)
+            cards_played_suit = Cards(cards).single_suit(self.trump_suit, self.trump_rank)
             hand_after_play = Cards(player_hand.cards)
             hand_after_play.play_cards(cards)
 
@@ -596,15 +595,15 @@ class Game(models.Model):
                     [card for card in player_hand.cards
                      if card.get_suit(self.trump_suit, self.trump_rank) == cards_played_suit],
                     self.trump_suit, self.trump_rank)
-                combinations_played = CardCombinations(cards_played.cards,
-                                                       self.trump_suit, self.trump_rank)
+                combinations_played = CardCombinations(cards, self.trump_suit, self.trump_rank)
                 ret = first_player_combinations.validate(combinations_before_play, combinations_played)
                 if ret:
                     return ret
 
                 lead_play = CardCombinations.decode(self.gameplayer_set.all()[self.lead].play)
-                logger.debug("first: %s, lead: %s, play: %s", first_player_combinations.combinations,
-                             lead_play.combinations, combinations_played.combinations)
+                logger.debug("first: %s, lead: %s, play: %s",
+                             first_player_combinations.decode(), lead_play.decode(),
+                             CardCombinations(cards, self.trump_suit, self.trump_rank).decode())
                 logger.debug("can win: %s, win: %s", first_player_combinations.can_win, combinations_played > lead_play)
                 if first_player_combinations.can_win and combinations_played > lead_play:
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
