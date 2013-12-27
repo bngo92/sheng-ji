@@ -38,6 +38,8 @@
     $.getJSON("{% url 'main.views.status' game.id %}", function(data) {
       if (data.status.trump_suit) {
         $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
+      } else {
+        $("#trump-suit").text("Trump Suit: ");
       }
       $("#trump-rank").text("Trump Rank: "+data.status.trump_rank);
 
