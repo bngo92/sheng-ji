@@ -1,8 +1,9 @@
 from collections import Counter
 from functools import total_ordering
-import json
-import random
 import itertools
+import json
+import logging
+import random
 
 from django import forms
 from django.contrib.auth import authenticate
@@ -55,6 +56,9 @@ RANK_CHOICES = (
     (BLACK, 'Black'),
     (RED, 'Red'),
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 @total_ordering
@@ -597,6 +601,9 @@ class Game(models.Model):
                     return ret
 
                 lead_play = CardCombinations.decode(self.gameplayer_set.all()[self.lead].play)
+                logger.debug("first: %s, lead: %s, play: %s", first_player_combinations.combinations,
+                             lead_play.combinations, combinations_played.combinations)
+                logger.debug("can win: %s, win: %s", first_player_combinations.can_win, combinations_played > lead_play)
                 if first_player_combinations.can_win and combinations_played > lead_play:
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
 
