@@ -36,7 +36,9 @@
   function load(force) {
     clearTimeout(window.handle);
     $.getJSON("{% url 'main.views.status' game.id %}", function(data) {
-      $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
+      if (data.status.trump_suit) {
+        $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
+      }
       $("#trump-rank").text("Trump Rank: "+data.status.trump_rank);
 
       if (data.stage == 5) {
