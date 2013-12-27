@@ -602,8 +602,8 @@ class Game(models.Model):
 
                 lead_play = CardCombinations.decode(self.gameplayer_set.all()[self.lead].play)
                 logger.debug("first: %s, lead: %s, play: %s",
-                             first_player_combinations.decode(), lead_play.decode(),
-                             CardCombinations(cards, self.trump_suit, self.trump_rank).decode())
+                             first_player_combinations.encode(), lead_play.encode(),
+                             CardCombinations(cards, self.trump_suit, self.trump_rank).encode())
                 logger.debug("can win: %s, win: %s", first_player_combinations.can_win, combinations_played > lead_play)
                 if first_player_combinations.can_win and combinations_played > lead_play:
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
