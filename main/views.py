@@ -147,3 +147,13 @@ def reserve(request, game_id):
         player = game.gameplayer_set.get(player__user=request.user)
         game.pickup_reserve(player)
     return HttpResponse()
+
+
+@login_required(login_url=home)
+def rematch(request, game_id):
+    if request.method == "POST":
+        game = Game.objects.get(id=game_id)
+        new_game = game.rematch()
+        if new_game:
+            return redirect(new_game)
+    return HttpResponse()

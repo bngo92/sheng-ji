@@ -97,6 +97,15 @@
           play_btn.attr("disabled", "disabled");
           play_btn.off("click");
         }
+      } else if (data.stage == 5) {
+        $("#buttons").append($("<button>").addClass("btn btn-success").addText("Rematch").click(function() {
+          $.post("{% url 'rematch' game.id %}", function(data) {
+            if (data) {
+              window.location.href = data;
+            }
+          });
+        }));
+        return;
       }
 
       var hand = data.hand;

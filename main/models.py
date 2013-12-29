@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, deque
 from functools import total_ordering
 import itertools
 import json
@@ -386,8 +386,10 @@ class Game(models.Model):
         return Game.SETTINGS[self.number_of_players()][2]
 
     @classmethod
-    def setup(cls, players):
-        random.shuffle(players)
+    def setup(cls, players, shuffle=False):
+        if shuffle:
+            random.shuffle(players)
+
         game = cls()
         game.trump_rank = players[0].rank
         game.save()
@@ -667,6 +669,16 @@ class Game(models.Model):
                         player.player.save()
 
         self.save()
+
+    def rematch(self):
+        if self.stage != Game.SCORE:
+            return False
+
+        players = deque(self.gameplayer_set.all())
+        players.rotate(-1)
+        while players[0].team != self.winner:
+            players.rotate(-1)
+        return Game.setup(players)
 
 
 class Player(models.Model):
