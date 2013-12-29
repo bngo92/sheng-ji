@@ -101,7 +101,7 @@
       } else if (data.stage == 5) {
         if ($("#rematch-btn").length == 0) {
           $("#buttons").append($("<button>").attr("id", "rematch-btn").addClass("btn btn-success").text("Rematch").click(function() {
-            $.post("{% url 'rematch' game.id %}", function(data) {
+            $.post("{% url 'rematch' game.id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
               if (data) {
                 window.location.href = data;
               }
