@@ -35,7 +35,7 @@
 
   function load(force) {
     clearTimeout(window.handle);
-    var refresh = true;
+    window.refresh = true;
     $.getJSON("{% url 'main.views.status' game.id %}", function(data) {
       if (data.status.trump_suit) {
         $("#trump-suit").text("Trump Suit: "+data.status.trump_suit);
@@ -106,7 +106,7 @@
             }
           });
         }));
-        refresh = false;
+        window.refresh = false;
       }
 
       var hand = data.hand;
@@ -155,7 +155,7 @@
         }
       }
     });
-    if (refresh) {
+    if (window.refresh) {
       window.handle = setTimeout(function() {
         load(false);
       }, 2000);
