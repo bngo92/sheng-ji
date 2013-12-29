@@ -155,5 +155,5 @@ def rematch(request, game_id):
         game = Game.objects.get(id=game_id)
         new_game = game.rematch()
         if new_game:
-            return redirect(new_game)
+            return HttpResponse(new_game.get_absolute_url())
     return HttpResponse()
