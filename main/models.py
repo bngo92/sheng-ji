@@ -342,7 +342,7 @@ class Game(models.Model):
     trick_points = models.IntegerField(default=0)
     lead = models.IntegerField(default=0)
     winner = models.CharField(max_length=1, choices=TEAM_CHOICES, default=DECLARERS)
-    next_game = models.OneToOneField('self', blank=True, null=True)
+    next_game = models.OneToOneField('self', blank=True, null=True, default=None)
 
     # Cards
     deck = models.CharField(max_length=1000)
