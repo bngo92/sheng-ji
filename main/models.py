@@ -680,7 +680,7 @@ class Game(models.Model):
             players.rotate(-1)
             while players[0].team != self.winner:
                 players.rotate(-1)
-            self.next_game = Game.setup(players)
+            self.next_game = Game.setup([player.player for player in players])
             self.save()
         return self.next_game
 
