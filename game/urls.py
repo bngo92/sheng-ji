@@ -14,6 +14,7 @@ urlpatterns = patterns('',
     url(r'^game/(?P<game_id>\d+)', 'main.views.game', name='game'),
     url(r'^ready/(?P<game_id>\d+)', 'main.views.ready', name='ready'),
     url(r'^reserve/(?P<game_id>\d+)', 'main.views.reserve', name='reserve'),
+    url(r'^rematch/(?P<game_id>\d+)', 'main.views.rematch', name='rematch'),
     # url(r'^game/', include('game.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
