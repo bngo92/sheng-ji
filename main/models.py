@@ -342,6 +342,7 @@ class Game(models.Model):
     trick_points = models.IntegerField(default=0)
     lead = models.IntegerField(default=0)
     winner = models.CharField(max_length=1, choices=TEAM_CHOICES, default=DECLARERS)
+    next_game = models.OneToOneField('self')
 
     # Cards
     deck = models.CharField(max_length=1000)
@@ -674,11 +675,14 @@ class Game(models.Model):
         if self.stage != Game.SCORE:
             return False
 
-        players = deque(self.gameplayer_set.all())
-        players.rotate(-1)
-        while players[0].team != self.winner:
+        if not self.next_game:
+            players = deque(self.gameplayer_set.all())
             players.rotate(-1)
-        return Game.setup(players)
+            while players[0].team != self.winner:
+                players.rotate(-1)
+            self.next_game = Game.setup(players)
+            self.save()
+        return self.next_game
 
 
 class Player(models.Model):
