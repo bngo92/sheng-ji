@@ -312,9 +312,10 @@ class CardCombinations(object):
 
     @classmethod
     def decode(cls, s):
-        if isinstance(s, bytes):
-            s = s.decode('utf-8')
-        play_dict = json.loads(s)
+        try:
+            play_dict = json.loads(s)
+        except TypeError:
+            play_dict = json.loads(s.decode('utf-8'))
         play = cls()
         play.suit = play_dict['suit']
         play.rank = play_dict['rank']
