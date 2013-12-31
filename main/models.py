@@ -315,7 +315,7 @@ class CardCombinations(object):
         try:
             play_dict = json.loads(s)
         except TypeError:
-            play_dict = json.loads(s.decode('utf-8'))
+            play_dict = json.loads(str(s, 'utf-8'))
         play = cls()
         play.suit = play_dict['suit']
         play.rank = play_dict['rank']
