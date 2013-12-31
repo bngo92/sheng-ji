@@ -27,10 +27,13 @@ class CardTest(TestCase):
 
 
 class PlayTest(TestCase):
-    def assert_combination(self, combination, n, consecutive, rank):
+    def assert_combination(self, combination, n, consecutive, ranks):
         self.assertEqual(combination['n'], n)
         self.assertEqual(combination['consecutive'], consecutive)
-        self.assertEqual(combination['rank'], rank)
+        try:
+            self.assertIn(combination['rank'], ranks)
+        except TypeError:
+            self.assertEqual(combination['rank'], ranks)
 
     def test_init(self):
         trump_suit = CLUBS
@@ -90,8 +93,10 @@ class PlayTest(TestCase):
         self.assertTrue(play.suit == HEARTS)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 2)
-        self.assert_combination(play.combinations[0], 2, 1, TEN)
-        self.assert_combination(play.combinations[1], 2, 1, EIGHT)
+        self.assert_combination(play.combinations[0], 2, 1, (EIGHT, TEN))
+        self.assert_combination(play.combinations[1], 2, 1, (EIGHT, TEN))
+        ranks = play.combinations[0]['rank'], play.combinations[1]['rank']
+        self.assertEqual(len(ranks), len(set(ranks)))
 
         s = "S9,S9,D8,D8"
         hand = Cards.fromstr(s)
@@ -107,8 +112,10 @@ class PlayTest(TestCase):
         self.assertTrue(play.suit == TRUMP)
         self.assertTrue(play.cards == s)
         self.assertTrue(len(play.combinations) == 2)
-        self.assert_combination(play.combinations[0], 2, 1, ONSUIT_TRUMP)
-        self.assert_combination(play.combinations[1], 2, 1, SIX)
+        self.assert_combination(play.combinations[0], 2, 1, (SIX, ONSUIT_TRUMP))
+        self.assert_combination(play.combinations[1], 2, 1, (SIX, ONSUIT_TRUMP))
+        ranks = play.combinations[0]['rank'], play.combinations[1]['rank']
+        self.assertEqual(len(ranks), len(set(ranks)))
 
         s = "S7,S7,D7,D7"
         cards = Cards.fromstr(s).cards

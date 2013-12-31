@@ -120,8 +120,8 @@ def is_consecutive(cards, trump_suit, trump_rank):
     ranks = [card.get_rank(trump_suit, trump_rank) for card in cards]
     min_rank = min(ranks)
     max_rank = max(ranks)
-    return (sorted(ranks + [trump_rank]) == range(min_rank, max_rank + 1) if min_rank < trump_rank < max_rank else
-            sorted(ranks) == range(min_rank, max_rank + 1))
+    return (sorted(ranks + [trump_rank]) == list(range(min_rank, max_rank + 1)) if min_rank < trump_rank < max_rank else
+            sorted(ranks) == list(range(min_rank, max_rank + 1)))
 
 
 class Cards(object):
@@ -312,6 +312,8 @@ class CardCombinations(object):
 
     @classmethod
     def decode(cls, s):
+        if isinstance(s, bytes):
+            s = s.decode('utf-8')
         play_dict = json.loads(s)
         play = cls()
         play.suit = play_dict['suit']
@@ -690,8 +692,8 @@ class Player(models.Model):
     rank = models.IntegerField(choices=RANK_CHOICES, default=TWO)
     plus = models.BooleanField(default=False)
 
-    def __unicode__(self):
-        return self.user.__unicode__()
+    def __str__(self):
+        return self.user.__str__()
 
     def get_rank(self):
         return '{}{}'.format(self.rank, '+' if self.plus else '-')
