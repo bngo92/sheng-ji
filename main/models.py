@@ -366,7 +366,7 @@ class Game(models.Model):
         8: (4, 25, 8),  # 4 * 54 = 216; 8 * 26 + 8 = 216
     }
 
-    def __unicode__(self):
+    def __str__(self):
         return 'Game #{}'.format(self.id)
 
     def get_absolute_url(self):
@@ -727,8 +727,8 @@ class GamePlayer(models.Model):
     hand = models.CharField(max_length=200, default='')
     play = models.CharField(max_length=200, default='')
 
-    def __unicode__(self):
-        return self.player.__unicode__()
+    def __str__(self):
+        return self.player.__str__()
 
     def get_hand(self):
         return Cards.fromstr(self.hand)
