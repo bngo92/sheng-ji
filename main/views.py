@@ -76,10 +76,10 @@ def status(request, game_id):
         'status': {
             'trump_rank': game.get_trump_rank_display(),
             'trump_suit': game.get_trump_suit_display(),
-            'turn': next((player.__unicode__() for player in players if player.your_turn()), '')
+            'turn': next((str(player) for player in players if player.your_turn()), '')
         },
         'hand': {
-            'player': player.__unicode__(),
+            'player': str(player),
             'str': ','.join(str(card) for card in sorted(player.get_hand().cards)),
             'cards': [card.repr() for card in sorted(player.get_hand().cards,
                                                      key=lambda c: (c.get_suit(game.trump_suit, game.trump_rank),
@@ -87,7 +87,7 @@ def status(request, game_id):
                                                                     c.suit))],
             'new_cards': new_cards,
         },
-        'players': [{'name': player.__unicode__(),
+        'players': [{'name': str(player),
                      'ready': player.ready,
                      'team': player.team,
                      'points': player.points,

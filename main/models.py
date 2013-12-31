@@ -693,7 +693,7 @@ class Player(models.Model):
     plus = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.user.__str__()
+        return str(self.user)
 
     def get_rank(self):
         return '{}{}'.format(self.rank, '+' if self.plus else '-')
@@ -728,7 +728,7 @@ class GamePlayer(models.Model):
     play = models.CharField(max_length=200, default='')
 
     def __str__(self):
-        return self.player.__str__()
+        return str(self.player)
 
     def get_hand(self):
         return Cards.fromstr(self.hand)
