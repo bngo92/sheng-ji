@@ -374,6 +374,9 @@ class Game(models.Model):
         from django.core.urlresolvers import reverse
         return reverse('main.views.game', args=[str(self.id)])
 
+    def get_players_names(self):
+        return ', '.join(str(player) for player in self.gameplayer_set.all())
+
     def number_of_players(self):
         return self.gameplayer_set.count()
 

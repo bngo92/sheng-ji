@@ -29,7 +29,7 @@ def send_message(func):
 def home(request):
     if request.user.is_authenticated():
         return render(request, "home.html",
-                      {'games': Game.objects.filter(gameplayer__player__user=request.user).order_by('-id'),
+                      {'games': Game.objects.filter(gameplayer__player__user=request.user).order_by('-id')[:10],
                        'players': sorted(Player.objects.all(), key=lambda p: (-p.rank, -p.plus))})
 
     if request.method == "POST":
@@ -37,7 +37,7 @@ def home(request):
         if form.is_valid():
             auth.login(request, form.cleaned_data['user'])
             return render(request, "home.html",
-                          {'games': Game.objects.filter(gameplayer__player__user=request.user).order_by('-id'),
+                          {'games': Game.objects.filter(gameplayer__player__user=request.user).order_by('-id')[:10],
                            'players': sorted(Player.objects.all(), key=lambda p: (-p.rank, -p.plus))})
     else:
         form = LoginForm()
