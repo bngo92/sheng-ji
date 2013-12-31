@@ -4,10 +4,10 @@
   <div class="col-md-8">
     {% for game in games %}
       <h4><a href="{% url 'game' game.id %}">Game #{{ game.id }}</a></h4>
-      <p>{{ game.get_players_names }}</p>
-      {% if game.your_turn %}
-        <p class="text-success">Your turn</p>
-      {% endif %}
+      <ul class="list-unstyled">
+        <li>{{ game.get_status }}</li>
+        <li>{{ game.get_players_names }}</li>
+      </ul>
     {% endfor %}
     <a href="{% url 'new_game' %}"><button class="btn btn-primary">New game</button></a>
   </div>

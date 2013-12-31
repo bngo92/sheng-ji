@@ -377,6 +377,12 @@ class Game(models.Model):
     def get_players_names(self):
         return ', '.join(str(player) for player in self.gameplayer_set.all())
 
+    def get_points(self):
+        return sum(player.points for player in self.gameplayer_set.filter(team=OPPONENTS))
+
+    def get_status(self):
+        return 'Stage: {}, Score: {}'.format(self.get_stage_display(), self.get_points)
+
     def number_of_players(self):
         return self.gameplayer_set.count()
 
@@ -646,7 +652,7 @@ class Game(models.Model):
                                         10 * len([card for card in cards if card.rank == TEN or card.rank == KING]))
                     lead.save()
 
-                opponent_points = sum(player.points for player in self.gameplayer_set.filter(team=OPPONENTS))
+                opponent_points = self.get_points()
                 if opponent_points >= 80:
                     players = self.gameplayer_set.filter(team=OPPONENTS)
                     if opponent_points >= 160:

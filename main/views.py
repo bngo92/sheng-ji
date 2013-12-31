@@ -95,7 +95,7 @@ def status(request, game_id):
                                for card in sorted(Cards.fromstr(player.get_play().cards).cards)]
         if player.play else []} for player in players],
         'winner': 'Red' if game.winner == DECLARERS else 'Blue',
-        'points': sum(player.points for player in game.gameplayer_set.filter(team=OPPONENTS)),
+        'points': game.get_points(),
     }), content_type='application/json')
 
 
