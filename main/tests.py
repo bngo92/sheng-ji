@@ -166,6 +166,12 @@ class PlayTest(TestCase):
         self.assertTrue(sorted([rank1, rank2]) == sorted([TWO, THREE]))
 
 
+class PlayerTest(TestCase):
+    def test_player(self):
+        player = Player.create_player('a', 'a')
+        self.assertEqual(str(player), 'a')
+
+
 class GameTest(TestCase):
     def assert_combination(self, combination, n, consecutive, rank):
         self.assertEqual(combination['n'], n)
