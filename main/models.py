@@ -381,7 +381,7 @@ class Game(models.Model):
         return sum(player.points for player in self.gameplayer_set.filter(team=OPPONENTS))
 
     def get_status(self):
-        return 'Stage: {}, Score: {}'.format(self.get_stage_display(), self.get_points)
+        return 'Stage: {}, Score: {}'.format(self.get_stage_display(), self.get_points())
 
     def number_of_players(self):
         return self.gameplayer_set.count()
