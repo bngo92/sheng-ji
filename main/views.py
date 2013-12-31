@@ -4,7 +4,7 @@ from django.shortcuts import render as django_render, redirect
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 
-from models import *
+from main.models import *
 
 
 def render(request, template_name, additional=None):
