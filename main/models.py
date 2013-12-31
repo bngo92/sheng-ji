@@ -215,11 +215,11 @@ class CardCombinations(object):
 
         if consecutive:
             subsets = {}
-            for k, v in ranks.iteritems():
+            for k, v in ranks.items():
                 if v >= 2:
                     subsets.setdefault(v, []).append(k)
 
-            for n, subset in subsets.iteritems():
+            for n, subset in subsets.items():
                 i = len(subset)
                 while i > 1:
                     permutations = itertools.permutations(subset, i)
@@ -236,7 +236,7 @@ class CardCombinations(object):
                     else:
                         i -= 1
 
-        for k, v in ranks.iteritems():
+        for k, v in ranks.items():
             self.combinations.append({'n': v, 'consecutive': 1, 'rank': k.get_rank(trump_suit, trump_rank)})
 
     def validate(self, before, after):
