@@ -2,8 +2,6 @@
 
 {% block content %}
   <div class="col-md-8">
-    <h4>Games</h4>
-    <a href="{% url 'new_game' %}"><button class="btn btn-primary">New game</button></a>
     {% for game in games %}
       <h4><a href="{% url 'game' game.id %}">Game #{{ game.id }}</a></h4>
       <p>{{ game.get_players_names }}</p>
@@ -11,6 +9,7 @@
         <p class="text-success">Your turn</p>
       {% endif %}
     {% endfor %}
+    <a href="{% url 'new_game' %}"><button class="btn btn-primary">New game</button></a>
   </div>
   <div class="col-md-4">
     <h4>Leaderboard</h4>
