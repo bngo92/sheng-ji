@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 
-from django.shortcuts import render as django_render, redirect
+from django.shortcuts import render as django_render, redirect, get_object_or_404
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 
@@ -47,7 +47,7 @@ def home(request):
 
 @login_required(login_url=home)
 def game(request, game_id):
-    game = Game.objects.get(id=game_id)
+    game = get_object_or_404(Game, id=game_id)
     return render(request, "game.html", {'game': game})
 
 
@@ -58,7 +58,7 @@ def logout(request):
 
 @login_required(login_url=home)
 def status(request, game_id):
-    game = Game.objects.get(id=game_id)
+    game = get_object_or_404(Game, id=game_id)
     players = game.gameplayer_set.all()
     player = game.gameplayer_set.get(player__user=request.user)
 
@@ -102,7 +102,7 @@ def status(request, game_id):
 @login_required(login_url=home)
 @send_message
 def ready(request, game_id):
-    game = Game.objects.get(id=game_id)
+    game = get_object_or_404(Game, id=game_id)
     player = game.gameplayer_set.get(player__user=request.user)
 
     if game.stage == Game.SETUP:
@@ -126,7 +126,7 @@ def new_game(request):
 @login_required(login_url=home)
 @send_message
 def play(request, game_id):
-    game = Game.objects.get(id=game_id)
+    game = get_object_or_404(Game, id=game_id)
     player = game.gameplayer_set.get(player__user=request.user)
     if request.method == "POST":
         cards = Cards.fromstr(request.POST['data']).cards
@@ -143,7 +143,7 @@ def play(request, game_id):
 @login_required(login_url=home)
 def reserve(request, game_id):
     if request.method == "POST":
-        game = Game.objects.get(id=game_id)
+        game = get_object_or_404(Game, id=game_id)
         player = game.gameplayer_set.get(player__user=request.user)
         game.pickup_reserve(player)
     return HttpResponse()
@@ -152,7 +152,7 @@ def reserve(request, game_id):
 @login_required(login_url=home)
 def rematch(request, game_id):
     if request.method == "POST":
-        game = Game.objects.get(id=game_id)
+        game = get_object_or_404(Game, id=game_id)
         new_game = game.rematch()
         if new_game:
             return HttpResponse(new_game.get_absolute_url())
