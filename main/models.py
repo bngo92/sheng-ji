@@ -324,6 +324,35 @@ class CardCombinations(object):
         return play
 
 
+class FriendCard(models.Model):
+    number = models.IntegerField()
+    suit = models.CharField(max_length=1, choices=SUIT_CHOICES)
+    rank = models.IntegerField(choices=RANK_CHOICES)
+    counter = models.IntegerField(default=0)
+    found = models.BooleanField(default=False)
+
+    def check(self, player, card):
+        if card.suit == self.suit and card.rank == self.rank:
+            self.counter += 1
+            if self.counter == self.number:
+                self.found = True
+                player.team = DECLARERS
+                player.save()
+            self.save()
+
+    @classmethod
+    def fromstr(cls, s):
+        ret = []
+        for card in s.split(","):
+            friend_card = cls()
+            friend_card.number = card[0]
+            friend_card.suit = card[1]
+            friend_card.rank = card[2:]
+            friend_card.save()
+            ret.append(friend_card)
+        return ret
+
+
 class Game(models.Model):
     SETUP = '1'
     DEAL = '2'
@@ -346,6 +375,8 @@ class Game(models.Model):
     lead = models.IntegerField(default=0)
     winner = models.CharField(max_length=1, choices=TEAM_CHOICES, default=DECLARERS)
     next_game = models.OneToOneField('self', blank=True, null=True, default=None)
+    find_friends = models.BooleanField(default=False)
+    friend_cards = models.ManyToManyField(FriendCard)
 
     # Cards
     deck = models.CharField(max_length=1000)
@@ -383,6 +414,9 @@ class Game(models.Model):
     def get_status(self):
         return 'Stage: {}, Score: {}'.format(self.get_stage_display(), self.get_points())
 
+    def number_of_friends(self):
+        return self.gameplayer_set.count() // 2 - 1
+
     def number_of_players(self):
         return self.gameplayer_set.count()
 
@@ -399,13 +433,13 @@ class Game(models.Model):
         return Game.SETTINGS[self.number_of_players()][2]
 
     @classmethod
-    def setup(cls, players, shuffle=False):
+    def setup(cls, players, shuffle=False, find_friends=False):
         if shuffle:
             random.shuffle(players)
 
         game = cls()
+        game.find_friends = find_friends
         game.trump_rank = players[0].rank
-        game.save()
 
         try:
             deck = [card for _ in range(game.number_of_decks(len(players))) for card in create_deck()]
@@ -415,13 +449,23 @@ class Game(models.Model):
         random.shuffle(deck)
         game.deck = ','.join(map(str, deck))
         game.kitty = ''
+        game.save()
 
-        for turn, player in enumerate(players):
-            if turn % 2 == 0:
-                team = DECLARERS
-            else:
-                team = OPPONENTS
-            GamePlayer.objects.create(game=game, player=player, team=team, turn=turn)
+        if len(players) == 4:
+            for turn, player in enumerate(players):
+                if turn % 2 == 0:
+                    team = DECLARERS
+                else:
+                    team = OPPONENTS
+                GamePlayer.objects.create(game=game, player=player, team=team, turn=turn)
+        else:
+            for turn, player in enumerate(players):
+                if turn == 0:
+                    team = DECLARERS
+                else:
+                    team = OPPONENTS
+                GamePlayer.objects.create(game=game, player=player, team=team, turn=turn)
+            game.find_friends = True
 
         game.save()
         return game
@@ -503,7 +547,7 @@ class Game(models.Model):
             player.play = ''
             player.save()
 
-    def reserve(self, player, cards):
+    def reserve(self, player, cards, friend_cards=None):
         if self.stage != Game.RESERVE or player.turn != 0:
             return False
 
@@ -513,6 +557,16 @@ class Game(models.Model):
 
         if len(cards) != self.reserve_size():
             return "Incorrect number of cards were played"
+
+        if self.find_friends:
+            if not friend_cards:
+                return False
+
+            if len(friend_cards) != self.number_of_friends():
+                return False
+
+            for friend_card in friend_cards:
+                self.friend_cards.add(friend_card)
 
         player_hand.play_cards(cards)
         player.hand = str(player_hand)
@@ -622,6 +676,11 @@ class Game(models.Model):
                 logger.debug("can win: %s, win: %s", first_player_combinations.can_win, combinations_played > lead_play)
                 if first_player_combinations.can_win and combinations_played > lead_play:
                     self.lead = (self.turn + self.trick_turn) % self.number_of_players()
+
+        # Check find a friend
+        for friend_card in self.friend_cards.filter(found=False):
+            for card in cards:
+                friend_card.check(player, card)
 
         player_hand.play_cards(cards)
         player.hand = str(player_hand)

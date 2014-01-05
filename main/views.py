@@ -48,7 +48,11 @@ def home(request):
 @login_required(login_url=home)
 def game(request, game_id):
     game = get_object_or_404(Game, id=game_id)
-    return render(request, "game.html", {'game': game})
+    return render(request, "game.html", {'game': game, 'range': range(game.number_of_decks()),
+                                         'suits': [(k, v) for k, v in SUIT_CHOICES
+                                                   if k in NORMAL_SUITS and k != game.trump_suit],
+                                         'ranks': [(k, v) for k, v in RANK_CHOICES
+                                                   if k in NORMAL_RANKS and k != game.trump_rank]})
 
 
 def logout(request):
@@ -94,6 +98,7 @@ def status(request, game_id):
                      'cards': [card.repr()
                                for card in sorted(Cards.fromstr(player.get_play().cards).cards)]
         if player.play else []} for player in players],
+        'friends': game.number_of_friends() if game.find_friends else 0,
         'winner': 'Red' if game.winner == DECLARERS else 'Blue',
         'points': game.get_points(),
     }), content_type='application/json')
@@ -135,7 +140,8 @@ def play(request, game_id):
         if game.stage == Game.DEAL:
             return game.set_trump_suit(player, cards)
         if game.stage == Game.RESERVE:
-            return game.reserve(player, cards)
+            friend_cards = FriendCard.fromstr(request.POST['friend_cards'])
+            return game.reserve(player, cards, friend_cards)
         if game.stage == Game.PLAY:
             return game.play(player, cards)
 

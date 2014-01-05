@@ -50,14 +50,10 @@
         $("#turn").text("Turn: "+data.status.turn);
       }
 
+      var $buttons = $("#buttons");
       if (data.reserve) {
         var reserve = $("#reserve");
         if (reserve.length == 0) {
-          var $buttons = $("#buttons");
-          if (data.friend) {
-            var $form = $("<form>");
-            var $select = $("<select>").addClass("form-control");
-          }
           $buttons.append($("<button id='reserve' class='btn btn-success'>Pickup Kitty</button>")
             .click(function() {
               $.post("{% url 'reserve' game.id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
@@ -71,6 +67,29 @@
             })
           );
         }
+      }
+
+      if (data.stage == 3 && $("form").length == 0) {
+        var $form = $("<form>").addClass("form-inline");
+        for (var i = 0; i < data.friends; i++) {
+          var $select1 = $("<select>").addClass("form-control");
+          {% for _ in range %}
+            $select1.append($("<option>").text({{ forloop.counter }}));
+          {% endfor %}
+          $form.append($select1);
+          var $select2 = $("<select>").addClass("form-control");
+          {% for value, suit in suits %}
+            $select2.append($("<option>").attr("value", "{{ value }}").text("{{ suit }}"));
+          {% endfor %}
+          $form.append($select2);
+          var $select3 = $("<select>").addClass("form-control");
+          {% for value, rank in ranks %}
+            $select3.append($("<option>").attr("value", "{{ value }}").text("{{ rank }}"));
+          {% endfor %}
+          $form.append($select3);
+        }
+        $buttons.append($("<h4>").text("Find a Friend"));
+        $buttons.append($form);
       }
 
       window.stage = data.stage;
@@ -100,7 +119,7 @@
         }
       } else if (data.stage == 5) {
         if ($("#rematch-btn").length == 0) {
-          $("#buttons").append($("<button>").attr("id", "rematch-btn").addClass("btn btn-success").text("Rematch").click(function() {
+          $buttons.append($("<button>").attr("id", "rematch-btn").addClass("btn btn-success").text("Rematch").click(function() {
             $.post("{% url 'rematch' game.id %}", {csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
               if (data) {
                 window.location.href = data;
@@ -184,7 +203,12 @@
       $("#play").children("img").each(function() {
         a.push($(this).attr("class"));
       });
-      $.post("{% url 'main.views.play' game.id %}", {data: a.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
+      var b = [];
+      var $select = $("select");
+      for (var i = 0; i < $select.length; i += 3) {
+        b.push($select.eq(i).val() + $select.eq(i+1).val() + $select.eq(i+2).val())
+      }
+      $.post("{% url 'play' game.id %}", {data: a.join(","), friend_cards: b.join(","), csrfmiddlewaretoken: "{{ csrf_token }}"}, function(data) {
         if (data) {
           alert(data);
         } else {
